@@ -90,9 +90,13 @@ final class ClientTest extends TestCase {
             $this->markTestSkipped();
         }
 
-        $curlClient = new CurlClient(null, null, [
-            CURLOPT_TIMEOUT => 1,
-        ]);
+        $curlClient = new CurlClient(
+            null,
+            null,
+            [
+                CURLOPT_TIMEOUT => 1,
+            ]
+        );
         $client = new Client($login, $password, Client::DEFAULT_URL, $curlClient);
 
         $message = new Message(date('Y-m-d H:i:s'), [$phoneNumber]);

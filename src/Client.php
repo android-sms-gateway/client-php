@@ -13,6 +13,7 @@ use AndroidSmsGateway\Domain\MessageState;
 
 class Client {
     public const DEFAULT_URL = 'https://sms.capcom.me/api/3rdparty/v1';
+    public const USER_AGENT = 'AndroidSmsGateway-Client/1.0 (php)';
 
     protected string $basicAuth;
     protected string $baseUrl;
@@ -66,10 +67,7 @@ class Client {
     }
 
     /**
-     * Выполняет запрос к серверу
-     * @param string $method http-метод
-     * @param string $path адрес
-     * @param \AndroidSmsGateway\Interfaces\SerializableInterface|null $payload тело запроса
+     * @param \AndroidSmsGateway\Interfaces\SerializableInterface|null $payload
      * @throws HttpException
      * @throws \RuntimeException
      * @return object|array<object>|null
@@ -87,7 +85,8 @@ class Client {
                 $method,
                 $this->baseUrl . $path
             )
-            ->withAddedHeader('Authorization', 'Basic ' . $this->basicAuth);
+            ->withAddedHeader('Authorization', 'Basic ' . $this->basicAuth)
+            ->withAddedHeader('User-Agent', self::USER_AGENT);
         if (isset($data)) {
             $request = $request
                 ->withAddedHeader('Content-Type', 'application/json')
