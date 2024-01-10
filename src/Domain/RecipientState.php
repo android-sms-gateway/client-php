@@ -2,6 +2,7 @@
 
 namespace AndroidSmsGateway\Domain;
 
+use AndroidSmsGateway\Encryptor;
 use AndroidSmsGateway\Enums\ProcessState;
 
 /**
@@ -37,6 +38,12 @@ class RecipientState {
 
     public function Error(): ?string {
         return $this->error;
+    }
+
+    public function Decrypt(Encryptor $encryptor): self {
+        $this->phoneNumber = $encryptor->Decrypt($this->phoneNumber);
+
+        return $this;
     }
 
     public static function FromObject(object $obj): self {

@@ -2,6 +2,7 @@
 
 namespace AndroidSmsGateway\Domain;
 
+use AndroidSmsGateway\Encryptor;
 use AndroidSmsGateway\Interfaces\SerializableInterface;
 
 /**
@@ -31,6 +32,10 @@ class Message implements SerializableInterface {
      */
     private bool $withDeliveryReport;
     /**
+     * Is message and phones encrypted, `false` by default
+     */
+    private bool $isEncrypted = false;
+    /**
      * Phone numbers in E164 format
      * @var array<string>
      */
@@ -39,13 +44,35 @@ class Message implements SerializableInterface {
     /**
      * @param array<string> $phoneNumbers
      */
-    public function __construct(string $message, array $phoneNumbers, ?string $id = null, ?int $ttl = null, ?int $simNumber = null, bool $withDeliveryReport = true) {
+    public function __construct(
+        string $message,
+        array $phoneNumbers,
+        ?string $id = null,
+        ?int $ttl = null,
+        ?int $simNumber = null,
+        bool $withDeliveryReport = true
+    ) {
         $this->id = $id;
         $this->message = $message;
         $this->ttl = $ttl;
         $this->simNumber = $simNumber;
         $this->withDeliveryReport = $withDeliveryReport;
         $this->phoneNumbers = $phoneNumbers;
+        $this->isEncrypted = false;
+    }
+
+    public function Encrypt(Encryptor $encryptor): self {
+        if ($this->isEncrypted) {
+            return $this;
+        }
+
+        $this->isEncrypted = true;
+        $this->message = $encryptor->Encrypt($this->message);
+        $this->phoneNumbers = array_map(
+            fn(string $phoneNumber) => $encryptor->Encrypt($phoneNumber),
+            $this->phoneNumbers
+        );
+        return $this;
     }
 
     public function ToObject(): object {
@@ -55,6 +82,7 @@ class Message implements SerializableInterface {
             'ttl' => $this->ttl,
             'simNumber' => $this->simNumber,
             'withDeliveryReport' => $this->withDeliveryReport,
+            'isEncrypted' => $this->isEncrypted,
             'phoneNumbers' => $this->phoneNumbers
         ];
     }
