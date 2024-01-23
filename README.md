@@ -17,7 +17,7 @@ composer require capcom6/android-sms-gateway
 
 ## Usage
 
-Here is a simple example of how to send a message using the client:
+Here is a simple example of how to send a message using the library:
 
 
 ```php
@@ -27,7 +27,6 @@ require 'vendor/autoload.php';
 
 use AndroidSmsGateway\Client;
 use AndroidSmsGateway\Encryptor;
-use AndroidSmsGateway\EncryptedClient;
 use AndroidSmsGateway\Domain\Message;
 
 $login = 'your_login';
@@ -36,7 +35,7 @@ $password = 'your_password';
 $client = new Client($login, $password);
 // or
 // $encryptor = new Encryptor('your_passphrase');
-// $client = new EncryptedClient($login, $password, Client::DEFAULT_URL, $httpClient, $encryptor);
+// $client = new Client($login, $password, Client::DEFAULT_URL, $httpClient, $encryptor);
 
 $message = new Message('Your message text here.', ['+1234567890']);
 
@@ -57,15 +56,13 @@ try {
 }
 ```
 
-## Clients
+## Client
 
-There are two clients available:
-
-- `Client` is used for sending SMS messages in plain text, but can also be used for sending encrypted messages by providing an `Encryptor`.
+The `Client` is used for sending SMS messages in plain text, but can also be used for sending encrypted messages by providing an `Encryptor`.
 
 ### Methods
 
-Client has the following methods:
+The `Client` class has the following methods:
 
 * `Send(Message $message)`: Send a new SMS message.
 * `GetState(string $id)`: Retrieve the state of a previously sent message by its ID.
