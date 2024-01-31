@@ -13,7 +13,7 @@ use AndroidSmsGateway\Domain\MessageState;
 
 class Client {
     public const DEFAULT_URL = 'https://sms.capcom.me/api/3rdparty/v1';
-    public const USER_AGENT = 'android-sms-gateway/1.0 (client; php)';
+    public const USER_AGENT_TEMPLATE = 'android-sms-gateway/1.0 (client; php %s)';
 
     protected string $basicAuth;
     protected string $baseUrl;
@@ -105,7 +105,7 @@ class Client {
                 $this->baseUrl . $path
             )
             ->withAddedHeader('Authorization', 'Basic ' . $this->basicAuth)
-            ->withAddedHeader('User-Agent', self::USER_AGENT);
+            ->withAddedHeader('User-Agent', sprintf(self::USER_AGENT_TEMPLATE, PHP_VERSION));
         if (isset($data)) {
             $request = $request
                 ->withAddedHeader('Content-Type', 'application/json')

@@ -56,6 +56,10 @@ final class ClientTest extends TestCase {
             'application/json',
             $req->getHeaderLine('Content-Type')
         );
+        $this->assertEquals(
+            sprintf(Client::USER_AGENT_TEMPLATE, PHP_VERSION),
+            $req->getHeaderLine('User-Agent')
+        );
 
 
         $this->assertInstanceOf(MessageState::class, $messageState);
