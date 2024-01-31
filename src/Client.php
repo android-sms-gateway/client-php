@@ -19,6 +19,7 @@ class Client {
     protected string $baseUrl;
 
     protected HttpClient $client;
+    protected ?Encryptor $encryptor;
 
     protected RequestFactoryInterface $requestFactory;
     protected StreamFactoryInterface $streamFactory;
@@ -27,11 +28,13 @@ class Client {
         string $login,
         string $password,
         string $serverUrl = self::DEFAULT_URL,
-        ?HttpClient $client = null
+        ?HttpClient $client = null,
+        ?Encryptor $encryptor = null
     ) {
         $this->basicAuth = base64_encode($login . ':' . $password);
         $this->baseUrl = $serverUrl;
         $this->client = $client ?? HttpClientDiscovery::find();
+        $this->encryptor = $encryptor;
 
         $this->requestFactory = Psr17FactoryDiscovery::findRequestFactory();
         $this->streamFactory = Psr17FactoryDiscovery::findStreamFactory();
@@ -39,6 +42,10 @@ class Client {
 
     public function Send(Message $message): MessageState {
         $path = '/message';
+
+        if (isset($this->encryptor)) {
+            $message = $message->Encrypt($this->encryptor);
+        }
 
         $response = $this->sendRequest(
             'POST',
@@ -49,7 +56,13 @@ class Client {
             throw new \RuntimeException('Invalid response');
         }
 
-        return MessageState::FromObject($response);
+        $state = MessageState::FromObject($response);
+
+        if (isset($this->encryptor)) {
+            $state = $state->Decrypt($this->encryptor);
+        }
+
+        return $state;
     }
 
     public function GetState(string $id): MessageState {
@@ -63,7 +76,13 @@ class Client {
             throw new \RuntimeException('Invalid response');
         }
 
-        return MessageState::FromObject($response);
+        $state = MessageState::FromObject($response);
+
+        if (isset($this->encryptor)) {
+            $state = $state->Decrypt($this->encryptor);
+        }
+
+        return $state;
     }
 
     /**

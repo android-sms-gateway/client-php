@@ -34,6 +34,7 @@ final class MessageTest extends TestCase {
             'ttl' => $ttl,
             'simNumber' => $simNumber,
             'withDeliveryReport' => $withDeliveryReport,
+            'isEncrypted' => false,
             'phoneNumbers' => $phoneNumbers
         ];
 
