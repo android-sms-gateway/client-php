@@ -46,7 +46,12 @@ class Encryptor {
         $salt = base64_decode($saltBase64);
         $secretKey = $this->generateSecretKeyFromPassphrase($this->passphrase, $salt, 32, intval($params['i']));
 
-        return openssl_decrypt($encryptedBase64, 'aes-256-cbc', $secretKey, 0, $salt);
+        $decrypted = openssl_decrypt($encryptedBase64, 'aes-256-cbc', $secretKey, 0, $salt);
+        if ($decrypted === false) {
+            throw new \RuntimeException('Decryption failed, invalid passphrase?');
+        }
+
+        return $decrypted;
     }
 
     protected function generateSalt(int $size = 16): string {
