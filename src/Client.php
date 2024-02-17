@@ -2,14 +2,15 @@
 
 namespace AndroidSmsGateway;
 
-use Http\Client\Exception\HttpException;
-use Http\Client\HttpClient;
-use Http\Discovery\HttpClientDiscovery;
-use Http\Discovery\Psr17FactoryDiscovery;
-use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessageState;
+use Http\Client\Exception\HttpException;
+use Http\Discovery\Psr17FactoryDiscovery;
+use Http\Discovery\Psr18ClientDiscovery;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use RuntimeException;
 
 class Client {
     public const DEFAULT_URL = 'https://sms.capcom.me/api/3rdparty/v1';
@@ -18,7 +19,7 @@ class Client {
     protected string $basicAuth;
     protected string $baseUrl;
 
-    protected HttpClient $client;
+    protected ClientInterface $client;
     protected ?Encryptor $encryptor;
 
     protected RequestFactoryInterface $requestFactory;
@@ -28,12 +29,12 @@ class Client {
         string $login,
         string $password,
         string $serverUrl = self::DEFAULT_URL,
-        ?HttpClient $client = null,
+        ?ClientInterface $client = null,
         ?Encryptor $encryptor = null
     ) {
         $this->basicAuth = base64_encode($login . ':' . $password);
         $this->baseUrl = $serverUrl;
-        $this->client = $client ?? HttpClientDiscovery::find();
+        $this->client = $client ?? Psr18ClientDiscovery::find();
         $this->encryptor = $encryptor;
 
         $this->requestFactory = Psr17FactoryDiscovery::findRequestFactory();
@@ -53,7 +54,7 @@ class Client {
             $message
         );
         if (!is_object($response)) {
-            throw new \RuntimeException('Invalid response');
+            throw new RuntimeException('Invalid response');
         }
 
         $state = MessageState::FromObject($response);
@@ -73,7 +74,7 @@ class Client {
             $path
         );
         if (!is_object($response)) {
-            throw new \RuntimeException('Invalid response');
+            throw new RuntimeException('Invalid response');
         }
 
         $state = MessageState::FromObject($response);
@@ -87,7 +88,7 @@ class Client {
 
     /**
      * @param \AndroidSmsGateway\Interfaces\SerializableInterface|null $payload
-     * @throws HttpException
+     * @throws \Http\Client\Exception\HttpException
      * @throws \RuntimeException
      * @return object|array<object>|null
      */
@@ -96,7 +97,7 @@ class Client {
             ? json_encode($payload->ToObject())
             : null;
         if ($data === false) {
-            throw new \RuntimeException('Can\'t serialize data');
+            throw new RuntimeException('Can\'t serialize data');
         }
 
         $request = $this->requestFactory
@@ -120,7 +121,7 @@ class Client {
 
         $result = json_decode($response->getBody());
         if ($result === false) {
-            throw new \RuntimeException('Can\'t parse response');
+            throw new RuntimeException('Can\'t parse response');
         }
 
         return $result;
