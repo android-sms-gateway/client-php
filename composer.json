@@ -42,7 +42,7 @@
     ],
     "config": {
         "allow-plugins": {
-            "php-http/discovery": true
+            "php-http/discovery": false
         }
     }
 }
