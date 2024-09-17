@@ -14,7 +14,7 @@ use RuntimeException;
 
 class Client {
     public const DEFAULT_URL = 'https://sms.capcom.me/api/3rdparty/v1';
-    public const USER_AGENT_TEMPLATE = 'android-sms-gateway/1.1 (client; php %s)';
+    public const USER_AGENT_TEMPLATE = 'android-sms-gateway/2.0 (client; php %s)';
 
     protected string $basicAuth;
     protected string $baseUrl;
