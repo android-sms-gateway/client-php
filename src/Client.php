@@ -4,7 +4,7 @@ namespace AndroidSmsGateway;
 
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessageState;
-use Http\Client\Exception\HttpException;
+use AndroidSmsGateway\Exceptions\HttpException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
 use Psr\Http\Client\ClientInterface;
