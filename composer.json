@@ -29,7 +29,7 @@
     "require-dev": {
         "php-http/message": "^1.0",
         "php-http/mock-client": "^1.0",
-        "phpstan/phpstan": "^1.5",
+        "phpstan/phpstan": "^1.5 || ^2.0",
         "phpunit/phpunit": "^9.5",
         "php-http/curl-client": "^2.2",
         "laminas/laminas-diactoros": "^2.17"
