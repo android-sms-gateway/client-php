@@ -13,7 +13,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use RuntimeException;
 
 class Client {
-    public const DEFAULT_URL = 'https://sms.capcom.me/api/3rdparty/v1';
+    public const DEFAULT_URL = 'https://api.sms-gate.app/3rdparty/v1';
     public const USER_AGENT_TEMPLATE = 'android-sms-gateway/2.0 (client; php %s)';
 
     protected string $basicAuth;
@@ -42,7 +42,7 @@ class Client {
     }
 
     public function Send(Message $message): MessageState {
-        $path = '/message';
+        $path = '/messages';
 
         if (isset($this->encryptor)) {
             $message = $message->Encrypt($this->encryptor);
@@ -67,7 +67,7 @@ class Client {
     }
 
     public function GetState(string $id): MessageState {
-        $path = '/message/' . $id;
+        $path = '/messages/' . $id;
 
         $response = $this->sendRequest(
             'GET',

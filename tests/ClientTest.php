@@ -6,7 +6,6 @@ use Http\Client\Curl\Client as CurlClient;
 use AndroidSmsGateway\Client;
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessageState;
-use AndroidSmsGateway\Domain\RecipientState;
 use AndroidSmsGateway\Enums\ProcessState;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Mock\Client as MockClient;
@@ -47,7 +46,7 @@ final class ClientTest extends TestCase {
         $messageState = $this->client->Send($messageMock);
         $req = $this->mockClient->getLastRequest();
         $this->assertEquals('POST', $req->getMethod());
-        $this->assertEquals('/api/3rdparty/v1/message', $req->getUri()->getPath());
+        $this->assertEquals('/3rdparty/v1/messages', $req->getUri()->getPath());
         $this->assertEquals(
             'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
             $req->getHeaderLine('Authorization')
@@ -77,7 +76,7 @@ final class ClientTest extends TestCase {
         $messageState = $this->client->GetState('123');
         $req = $this->mockClient->getLastRequest();
         $this->assertEquals('GET', $req->getMethod());
-        $this->assertEquals('/api/3rdparty/v1/message/123', $req->getUri()->getPath());
+        $this->assertEquals('/3rdparty/v1/messages/123', $req->getUri()->getPath());
         $this->assertEquals(
             'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
             $req->getHeaderLine('Authorization')

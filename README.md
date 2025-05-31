@@ -1,6 +1,6 @@
 # SMS Gateway for Android™ PHP API Client
 
-This is a PHP client library for interfacing with the [SMS Gateway for Android](https://sms.capcom.me) API.
+This is a PHP client library for interfacing with the [SMS Gateway for Android](https://sms-gate.app) API.
 
 ## Requirements
 
