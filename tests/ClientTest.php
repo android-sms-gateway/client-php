@@ -282,7 +282,7 @@ final class ClientTest extends TestCase {
 
         $this->mockClient->addResponse($responseMock);
 
-        $result = $this->client->UpdateSettings($settings);
+        $result = $this->client->ReplaceSettings($settings);
         $req = $this->mockClient->getLastRequest();
         $this->assertEquals('PUT', $req->getMethod());
         $this->assertEquals('/3rdparty/v1/settings', $req->getUri()->getPath());

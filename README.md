@@ -116,19 +116,21 @@ $client = new Client(
 
 ### Core Methods
 
-| Category     | Method                                | Description              |
-| ------------ | ------------------------------------- | ------------------------ |
-| **Messages** | `SendMessage(Message $message)`       | Send SMS message         |
-|              | `GetMessageState(string $id)`         | Get message status by ID |
-| **Devices**  | `ListDevices()`                       | List registered devices  |
-|              | `RemoveDevice(string $id)`            | Remove device by ID      |
-| **System**   | `HealthCheck()`                       | Check API health status  |
-|              | `GetLogs(?string $from, ?string $to)` | Retrieve system logs     |
-| **Settings** | `GetSettings()`                       | Get account settings     |
-|              | `UpdateSettings(object $settings)`    | Update account settings  |
-| **Webhooks** | `ListWebhooks()`                      | List registered webhooks |
-|              | `RegisterWebhook(object $webhook)`    | Register new webhook     |
-|              | `DeleteWebhook(string $id)`           | Delete webhook by ID     |
+| Category     | Method                                               | Description                       |
+| ------------ | ---------------------------------------------------- | --------------------------------- |
+| **Messages** | `SendMessage(Message $message)`                      | Send SMS message                  |
+|              | `GetMessageState(string $id)`                        | Get message status by ID          |
+|              | `RequestInboxExport(MessagesExportRequest $request)` | Request inbox export via webhooks |
+| **Devices**  | `ListDevices()`                                      | List registered devices           |
+|              | `RemoveDevice(string $id)`                           | Remove device by ID               |
+| **System**   | `HealthCheck()`                                      | Check API health status           |
+|              | `GetLogs(?string $from, ?string $to)`                | Retrieve system logs              |
+| **Settings** | `GetSettings()`                                      | Get account settings              |
+|              | `PatchSettings(Settings $settings)`                  | Partially update account settings |
+|              | `ReplaceSettings(Settings $settings)`                | Replace account settings          |
+| **Webhooks** | `ListWebhooks()`                                     | List registered webhooks          |
+|              | `RegisterWebhook(Webhook $webhook)`                  | Register new webhook              |
+|              | `DeleteWebhook(string $id)`                          | Delete webhook by ID              |
 
 ### Builder Methods
 ```php

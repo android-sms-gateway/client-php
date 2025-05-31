@@ -277,7 +277,7 @@ class Client {
      * @param Settings $settings
      * @return object
      */
-    public function UpdateSettings(Settings $settings): object {
+    public function ReplaceSettings(Settings $settings): object {
         $path = '/settings';
 
         $response = $this->sendRequest(
