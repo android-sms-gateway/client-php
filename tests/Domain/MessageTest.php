@@ -49,8 +49,8 @@ final class MessageTest extends TestCase {
         $serialized = $message->ToObject();
 
         $this->assertNull($serialized->id);
-        $this->assertNull($serialized->ttl);
         $this->assertNull($serialized->simNumber);
         $this->assertTrue($serialized->withDeliveryReport);
+        $this->assertFalse($serialized->isEncrypted);
     }
 }
