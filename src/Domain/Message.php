@@ -40,6 +40,14 @@ class Message implements SerializableInterface {
      * @var array<string>
      */
     private array $phoneNumbers;
+    /**
+     * Message priority
+     */
+    private ?int $priority = null;
+    /**
+     * Valid until timestamp
+     */
+    private ?string $validUntil;
 
     /**
      * @param array<string> $phoneNumbers
@@ -50,8 +58,14 @@ class Message implements SerializableInterface {
         ?string $id = null,
         ?int $ttl = null,
         ?int $simNumber = null,
-        bool $withDeliveryReport = true
+        bool $withDeliveryReport = true,
+        ?int $priority = null,
+        ?string $validUntil = null
     ) {
+        if ($ttl !== null && $validUntil !== null) {
+            throw new \InvalidArgumentException('validUntil and ttl cannot be set at the same time');
+        }
+
         $this->id = $id;
         $this->message = $message;
         $this->ttl = $ttl;
@@ -59,6 +73,8 @@ class Message implements SerializableInterface {
         $this->withDeliveryReport = $withDeliveryReport;
         $this->phoneNumbers = $phoneNumbers;
         $this->isEncrypted = false;
+        $this->priority = $priority;
+        $this->validUntil = $validUntil;
     }
 
     public function Encrypt(Encryptor $encryptor): self {
@@ -76,14 +92,27 @@ class Message implements SerializableInterface {
     }
 
     public function ToObject(): object {
-        return (object) [
+        $obj = (object) [
             'id' => $this->id,
             'message' => $this->message,
-            'ttl' => $this->ttl,
             'simNumber' => $this->simNumber,
             'withDeliveryReport' => $this->withDeliveryReport,
             'isEncrypted' => $this->isEncrypted,
-            'phoneNumbers' => $this->phoneNumbers
+            'phoneNumbers' => $this->phoneNumbers,
         ];
+
+        if ($this->priority !== null) {
+            $obj->priority = $this->priority;
+        }
+
+        if ($this->ttl !== null) {
+            $obj->ttl = $this->ttl;
+        }
+
+        if ($this->validUntil !== null) {
+            $obj->validUntil = $this->validUntil;
+        }
+
+        return $obj;
     }
 }

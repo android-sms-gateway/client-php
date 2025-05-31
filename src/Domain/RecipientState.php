@@ -10,7 +10,7 @@ use AndroidSmsGateway\Enums\ProcessState;
  */
 class RecipientState {
     /**
-     * Recipient's phone number
+     * Recipient's phone number (or hash)
      */
     protected string $phoneNumber;
     /**
