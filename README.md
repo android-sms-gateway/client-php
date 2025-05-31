@@ -17,8 +17,11 @@ composer require capcom6/android-sms-gateway
 
 ## Usage
 
-Here is a simple example of how to send a message using the library:
+### Using the Builder Pattern
 
+The library provides builder classes for creating `Message` and `Settings` objects with numerous optional fields.
+
+#### Creating a Message
 
 ```php
 <?php
@@ -26,21 +29,22 @@ Here is a simple example of how to send a message using the library:
 require 'vendor/autoload.php';
 
 use AndroidSmsGateway\Client;
-use AndroidSmsGateway\Encryptor;
-use AndroidSmsGateway\Domain\Message;
+use AndroidSmsGateway\Domain\MessageBuilder;
 
 $login = 'your_login';
 $password = 'your_password';
 
 $client = new Client($login, $password);
-// or
-// $encryptor = new Encryptor('your_passphrase');
-// $client = new Client($login, $password, Client::DEFAULT_URL, $httpClient, $encryptor);
 
-$message = new Message('Your message text here.', ['+1234567890']);
+$message = (new MessageBuilder('Your message text here.', ['+1234567890']))
+    ->setTtl(3600)
+    ->setSimNumber(1)
+    ->setWithDeliveryReport(true)
+    ->setPriority(100)
+    ->build();
 
 try {
-    $messageState = $client->Send($message);
+    $messageState = $client->SendMessage($message);
     echo "Message sent with ID: " . $messageState->ID() . PHP_EOL;
 } catch (Exception $e) {
     echo "Error sending message: " . $e->getMessage() . PHP_EOL;
@@ -48,7 +52,7 @@ try {
 }
 
 try {
-    $messageState = $client->GetState($messageState->ID());
+    $messageState = $client->GetMessageState($messageState->ID());
     echo "Message state: " . $messageState->State() . PHP_EOL;
 } catch (Exception $e) {
     echo "Error getting message state: " . $e->getMessage() . PHP_EOL;
@@ -60,12 +64,35 @@ try {
 
 The `Client` is used for sending SMS messages in plain text, but can also be used for sending encrypted messages by providing an `Encryptor`.
 
-### Methods
+### Message Methods
 
-The `Client` class has the following methods:
+* `Send(Message $message)` (deprecated): Send a new SMS message.
+* `SendMessage(Message $message)`: Send a new SMS message.
+* `GetState(string $id)` (deprecated): Retrieve the state of a previously sent message by its ID.
+* `GetMessageState(string $id)`: Retrieve the state of a previously sent message by its ID.
 
-* `Send(Message $message)`: Send a new SMS message.
-* `GetState(string $id)`: Retrieve the state of a previously sent message by its ID.
+### Device Methods
+
+* `ListDevices()`: List all registered devices.
+* `RemoveDevice(string $id)`: Remove a device by ID.
+
+### System Methods
+
+* `HealthCheck()`: Check system health.
+* `RequestInboxExport(object $request)`: Request inbox messages export.
+* `GetLogs(?string $from = null, ?string $to = null)`: Get logs within a specified time range.
+
+### Settings Methods
+
+* `GetSettings()`: Get user settings.
+* `UpdateSettings(object $settings)`: Update user settings.
+* `PatchSettings(object $settings)`: Partially update user settings.
+
+### Webhook Methods
+
+* `ListWebhooks()`: List all registered webhooks.
+* `RegisterWebhook(object $webhook)`: Register a new webhook.
+* `DeleteWebhook(string $id)`: Delete a webhook by ID.
 
 # Contributing
 

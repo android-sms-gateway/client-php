@@ -1,5 +1,7 @@
 <?php
 
+namespace AndroidSmsGateway\Tests;
+
 use AndroidSmsGateway\Encryptor;
 use PHPUnit\Framework\TestCase;
 
