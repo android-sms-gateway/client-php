@@ -4,6 +4,11 @@ namespace AndroidSmsGateway;
 
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessageState;
+use AndroidSmsGateway\Domain\Device;
+use AndroidSmsGateway\Domain\LogEntry;
+use AndroidSmsGateway\Domain\Webhook;
+use AndroidSmsGateway\Domain\MessagesExportRequest;
+use AndroidSmsGateway\Domain\Settings;
 use AndroidSmsGateway\Exceptions\HttpException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
@@ -41,8 +46,37 @@ class Client {
         $this->streamFactory = Psr17FactoryDiscovery::findStreamFactory();
     }
 
-    public function Send(Message $message): MessageState {
+    /**
+     * Send a message (deprecated method)
+     *
+     * @param Message $message
+     * @param bool $skipPhoneValidation
+     * @return MessageState
+     */
+    public function Send(Message $message, bool $skipPhoneValidation = false): MessageState {
+        trigger_error(
+            'The Send method is deprecated. Use the new SendMessage method instead.',
+            E_USER_DEPRECATED
+        );
+
+        return $this->SendMessage($message, $skipPhoneValidation);
+    }
+
+    /**
+     * Send a message
+     *
+     * @param Message $message
+     * @param bool $skipPhoneValidation
+     * @return MessageState
+     */
+    public function SendMessage(Message $message, bool $skipPhoneValidation = false): MessageState {
         $path = '/messages';
+        $queryParams = [];
+        if ($skipPhoneValidation) {
+            $queryParams['skipPhoneValidation'] = 'true';
+        }
+
+        $queryString = empty($queryParams) ? '' : '?' . http_build_query($queryParams);
 
         if (isset($this->encryptor)) {
             $message = $message->Encrypt($this->encryptor);
@@ -50,7 +84,7 @@ class Client {
 
         $response = $this->sendRequest(
             'POST',
-            $path,
+            $path . $queryString,
             $message
         );
         if (!is_object($response)) {
@@ -66,7 +100,28 @@ class Client {
         return $state;
     }
 
+    /**
+     * Get message state by ID (deprecated method)
+     *
+     * @param string $id
+     * @return MessageState
+     */
     public function GetState(string $id): MessageState {
+        trigger_error(
+            'The GetState method is deprecated. Use the new GetMessageState method instead.',
+            E_USER_DEPRECATED
+        );
+
+        return $this->GetMessageState($id);
+    }
+
+    /**
+     * Get message state by ID
+     *
+     * @param string $id
+     * @return MessageState
+     */
+    public function GetMessageState(string $id): MessageState {
         $path = '/messages/' . $id;
 
         $response = $this->sendRequest(
@@ -84,6 +139,236 @@ class Client {
         }
 
         return $state;
+    }
+
+
+    /**
+     * List all devices
+     *
+     * @return array<Device>
+     */
+    public function ListDevices(): array {
+        $path = '/devices';
+
+        $response = $this->sendRequest(
+            'GET',
+            $path
+        );
+        if (!is_array($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return array_map(
+            static fn($obj) => Device::FromObject($obj),
+            $response
+        );
+    }
+
+    /**
+     * Remove a device by ID
+     *
+     * @param string $id
+     * @return void
+     */
+    public function RemoveDevice(string $id): void {
+        $path = '/devices/' . $id;
+
+        $this->sendRequest(
+            'DELETE',
+            $path
+        );
+    }
+
+    /**
+     * Check system health
+     *
+     * @return object
+     */
+    public function HealthCheck(): object {
+        $path = '/health';
+
+        $response = $this->sendRequest(
+            'GET',
+            $path
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return $response;
+    }
+
+    /**
+     * Request inbox messages export
+     *
+     * @param MessagesExportRequest $request
+     * @return object
+     */
+    public function RequestInboxExport(MessagesExportRequest $request): object {
+        $path = '/inbox/export';
+
+        $response = $this->sendRequest(
+            'POST',
+            $path,
+            $request
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return $response;
+    }
+
+    /**
+     * Get logs within a specified time range
+     *
+     * @param string|null $from
+     * @param string|null $to
+     * @return array<LogEntry>
+     */
+    public function GetLogs(?string $from = null, ?string $to = null): array {
+        $path = '/logs';
+        $queryParams = [];
+        if ($from !== null) {
+            $queryParams['from'] = $from;
+        }
+        if ($to !== null) {
+            $queryParams['to'] = $to;
+        }
+
+        $queryString = empty($queryParams) ? '' : '?' . http_build_query($queryParams);
+
+        $response = $this->sendRequest(
+            'GET',
+            $path . $queryString
+        );
+        if (!is_array($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return array_map(
+            static fn($obj) => LogEntry::FromObject($obj),
+            $response
+        );
+    }
+
+    /**
+     * Get user settings
+     *
+     * @return Settings
+     */
+    public function GetSettings(): Settings {
+        $path = '/settings';
+
+        $response = $this->sendRequest(
+            'GET',
+            $path
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return Settings::FromObject($response);
+    }
+
+    /**
+     * Update user settings
+     *
+     * @param Settings $settings
+     * @return Settings
+     */
+    public function ReplaceSettings(Settings $settings): Settings {
+        $path = '/settings';
+
+        $response = $this->sendRequest(
+            'PUT',
+            $path,
+            $settings
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return Settings::FromObject($response);
+    }
+
+    /**
+     * Partially update user settings
+     *
+     * @param Settings $settings
+     * @return Settings
+     */
+    public function PatchSettings(Settings $settings): Settings {
+        $path = '/settings';
+
+        $response = $this->sendRequest(
+            'PATCH',
+            $path,
+            $settings
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return Settings::FromObject($response);
+    }
+
+    /**
+     * List all webhooks
+     *
+     * @return array<Webhook>
+     */
+    public function ListWebhooks(): array {
+        $path = '/webhooks';
+
+        $response = $this->sendRequest(
+            'GET',
+            $path
+        );
+        if (!is_array($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return array_map(
+            static fn($obj) => Webhook::FromObject($obj),
+            $response
+        );
+    }
+
+    /**
+     * Register a webhook
+     *
+     * @param Webhook $webhook
+     * @return Webhook
+     */
+    public function RegisterWebhook(Webhook $webhook): Webhook {
+        $path = '/webhooks';
+
+        $response = $this->sendRequest(
+            'POST',
+            $path,
+            $webhook
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return Webhook::FromObject($response);
+    }
+
+    /**
+     * Delete a webhook by ID
+     *
+     * @param string $id
+     * @return void
+     */
+    public function DeleteWebhook(string $id): void {
+        $path = '/webhooks/' . $id;
+
+        $this->sendRequest(
+            'DELETE',
+            $path
+        );
     }
 
     /**
