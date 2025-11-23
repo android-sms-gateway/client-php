@@ -5,7 +5,7 @@
 [![PHP Version Require](https://img.shields.io/packagist/php-v/capcom6/android-sms-gateway?style=for-the-badge)](https://packagist.org/packages/capcom6/android-sms-gateway)
 [![Total Downloads](https://img.shields.io/packagist/dt/capcom6/android-sms-gateway.svg?style=for-the-badge)](https://packagist.org/packages/capcom6/android-sms-gateway)
 
-A modern PHP client for seamless integration with the [SMS Gateway for Android](https://sms-gate.app) API. Send SMS messages, manage devices, and configure webhooks through your PHP applications with this intuitive library.
+A modern PHP client for seamless integration with the [SMSGate](https://sms-gate.app) API. Send SMS messages, manage devices, and configure webhooks through your PHP applications with this intuitive library.
 
 ## 🔖 Table of Contents
 
@@ -17,8 +17,15 @@ A modern PHP client for seamless integration with the [SMS Gateway for Android](
   - [🚀 Quickstart](#-quickstart)
     - [Sending an SMS](#sending-an-sms)
     - [Managing Devices](#managing-devices)
+  - [🔐 Authentication](#-authentication)
+    - [Basic Authentication](#basic-authentication)
+    - [JWT Authentication](#jwt-authentication)
+      - [Generating a JWT Token](#generating-a-jwt-token)
+      - [Using a JWT Token](#using-a-jwt-token)
+      - [Revoking a JWT Token](#revoking-a-jwt-token)
   - [📚 Full API Reference](#-full-api-reference)
     - [Client Initialization](#client-initialization)
+      - [Basic Authentication](#basic-authentication-1)
     - [Core Methods](#core-methods)
     - [Builder Methods](#builder-methods)
   - [🔒 Security Notes](#-security-notes)
@@ -36,6 +43,8 @@ A modern PHP client for seamless integration with the [SMS Gateway for Android](
 - **Error Handling**: Structured exception management
 - **Type Safety**: Strict typing throughout the codebase
 - **Encryption Support**: End-to-end message encryption
+- **Dual Authentication**: Support for both Basic and JWT authentication
+- **Token Management**: Generate, use, and revoke JWT tokens with configurable scopes and TTL
 
 ## ⚙️ Prerequisites
 
@@ -103,13 +112,81 @@ try {
 }
 ```
 
+## 🔐 Authentication
+
+The SMSGate client supports two authentication methods: Basic Authentication and JWT (JSON Web Token) authentication. Each method has its own use cases and benefits.
+
+### Basic Authentication
+
+```php
+// Initialize client with Basic authentication
+$client = new Client('your_login', 'your_password');
+```
+
+### JWT Authentication
+
+JWT authentication uses bearer tokens for authentication.
+
+#### Generating a JWT Token
+
+```php
+use AndroidSmsGateway\Client;
+use AndroidSmsGateway\Domain\TokenRequest;
+
+// First, create a client with Basic authentication to generate a token
+$basicClient = new Client('your_login', 'your_password');
+
+// Create a token request with specific scopes and TTL
+$tokenRequest = new TokenRequest(
+    ['messages:send', 'messages:read'],  // Scopes for permissions
+    3600                                 // Token TTL in seconds (optional)
+);
+
+// Generate the token
+$tokenResponse = $basicClient->GenerateToken($tokenRequest);
+$jwtToken = $tokenResponse->AccessToken();
+
+echo "Token generated! Expires at: " . $tokenResponse->ExpiresAt() . PHP_EOL;
+```
+
+#### Using a JWT Token
+
+```php
+// Initialize client with JWT authentication
+$jwtClient = new Client(null, $jwtToken);
+
+// Now use the client as usual
+$message = (new MessageBuilder('Your message text here.', ['+1234567890']))->build();
+$messageState = $jwtClient->SendMessage($message);
+```
+
+#### Revoking a JWT Token
+
+```php
+// Revoke a token using its ID (jti)
+$basicClient->RevokeToken($tokenResponse->ID());
+echo "Token revoked successfully!" . PHP_EOL;
+```
+
 ## 📚 Full API Reference
 
 ### Client Initialization
+
+The client supports two authentication methods: Basic Authentication and JWT Bearer Tokens.
+
+#### Basic Authentication
 ```php
-$client = new Client(
-    string $login, 
+$clientBasic = new Client(
+    string $login,
     string $password,
+    string $serverUrl = 'https://api.sms-gate.app/3rdparty/v1',
+    ?\Psr\Http\Client\ClientInterface $httpClient = null,
+    ?\AndroidSmsGateway\Encryptor $encryptor = null
+);
+
+$clientJWT = new Client(
+    null,                           // Set login to null for JWT
+    string $jwtToken,               // JWT token as the second parameter
     string $serverUrl = 'https://api.sms-gate.app/3rdparty/v1',
     ?\Psr\Http\Client\ClientInterface $httpClient = null,
     ?\AndroidSmsGateway\Encryptor $encryptor = null
@@ -118,21 +195,23 @@ $client = new Client(
 
 ### Core Methods
 
-| Category     | Method                                               | Description                       |
-| ------------ | ---------------------------------------------------- | --------------------------------- |
-| **Messages** | `SendMessage(Message $message)`                      | Send SMS message                  |
-|              | `GetMessageState(string $id)`                        | Get message status by ID          |
-|              | `RequestInboxExport(MessagesExportRequest $request)` | Request inbox export via webhooks |
-| **Devices**  | `ListDevices()`                                      | List registered devices           |
-|              | `RemoveDevice(string $id)`                           | Remove device by ID               |
-| **System**   | `HealthCheck()`                                      | Check API health status           |
-|              | `GetLogs(?string $from, ?string $to)`                | Retrieve system logs              |
-| **Settings** | `GetSettings()`                                      | Get account settings              |
-|              | `PatchSettings(Settings $settings)`                  | Partially update account settings |
-|              | `ReplaceSettings(Settings $settings)`                | Replace account settings          |
-| **Webhooks** | `ListWebhooks()`                                     | List registered webhooks          |
-|              | `RegisterWebhook(Webhook $webhook)`                  | Register new webhook              |
-|              | `DeleteWebhook(string $id)`                          | Delete webhook by ID              |
+| Category           | Method                                               | Description                       |
+| ------------------ | ---------------------------------------------------- | --------------------------------- |
+| **Messages**       | `SendMessage(Message $message)`                      | Send SMS message                  |
+|                    | `GetMessageState(string $id)`                        | Get message status by ID          |
+|                    | `RequestInboxExport(MessagesExportRequest $request)` | Request inbox export via webhooks |
+| **Devices**        | `ListDevices()`                                      | List registered devices           |
+|                    | `RemoveDevice(string $id)`                           | Remove device by ID               |
+| **System**         | `HealthCheck()`                                      | Check API health status           |
+|                    | `GetLogs(?string $from, ?string $to)`                | Retrieve system logs              |
+| **Settings**       | `GetSettings()`                                      | Get account settings              |
+|                    | `PatchSettings(Settings $settings)`                  | Partially update account settings |
+|                    | `ReplaceSettings(Settings $settings)`                | Replace account settings          |
+| **Webhooks**       | `ListWebhooks()`                                     | List registered webhooks          |
+|                    | `RegisterWebhook(Webhook $webhook)`                  | Register new webhook              |
+|                    | `DeleteWebhook(string $id)`                          | Delete webhook by ID              |
+| **Authentication** | `GenerateToken(TokenRequest $request)`               | Generate a new JWT token          |
+|                    | `RevokeToken(string $jti)`                           | Revoke a JWT token by ID          |
 
 ### Builder Methods
 ```php
