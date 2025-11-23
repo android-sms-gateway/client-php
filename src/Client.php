@@ -21,7 +21,7 @@ class Client {
     public const DEFAULT_URL = 'https://api.sms-gate.app/3rdparty/v1';
     public const USER_AGENT_TEMPLATE = 'android-sms-gateway/2.0 (client; php %s)';
 
-    protected string $basicAuth;
+    protected string $authHeader;
     protected string $baseUrl;
 
     protected ClientInterface $client;
@@ -31,13 +31,21 @@ class Client {
     protected StreamFactoryInterface $streamFactory;
 
     public function __construct(
-        string $login,
+        ?string $login,
         string $password,
         string $serverUrl = self::DEFAULT_URL,
         ?ClientInterface $client = null,
         ?Encryptor $encryptor = null
     ) {
-        $this->basicAuth = base64_encode($login . ':' . $password);
+        if (!empty($login)) {
+            $this->authHeader = 'Basic ' . base64_encode($login . ':' . $password);
+        } elseif (!empty($password)) {
+            $passwordOrToken = $password;
+            $this->authHeader = 'Bearer ' . $passwordOrToken;
+        } else {
+            throw new RuntimeException('Missing credentials');
+        }
+
         $this->baseUrl = $serverUrl;
         $this->client = $client ?? Psr18ClientDiscovery::find();
         $this->encryptor = $encryptor;
@@ -390,8 +398,9 @@ class Client {
                 $method,
                 $this->baseUrl . $path
             )
-            ->withAddedHeader('Authorization', 'Basic ' . $this->basicAuth)
-            ->withAddedHeader('User-Agent', sprintf(self::USER_AGENT_TEMPLATE, PHP_VERSION));
+            ->withAddedHeader('User-Agent', sprintf(self::USER_AGENT_TEMPLATE, PHP_VERSION))
+            ->withAddedHeader('Authorization', $this->authHeader);
+
         if (isset($data)) {
             $request = $request
                 ->withAddedHeader('Content-Type', 'application/json')
