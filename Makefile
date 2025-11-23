@@ -14,5 +14,5 @@
 
 .PHONY: test
 test:
-	vendor/bin/phpstan analyze --level 6 src/ tests/ \
+	vendor/bin/phpstan analyze --memory-limit 256M --level 6 src/ tests/ \
 		&& vendor/bin/phpunit --do-not-cache-result tests/
