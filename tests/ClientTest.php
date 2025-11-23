@@ -8,6 +8,8 @@ use AndroidSmsGateway\Domain\MessagesExportRequest;
 use AndroidSmsGateway\Domain\MessageState;
 use AndroidSmsGateway\Domain\Settings;
 use AndroidSmsGateway\Domain\Webhook;
+use AndroidSmsGateway\Domain\TokenRequest;
+use AndroidSmsGateway\Domain\TokenResponse;
 use AndroidSmsGateway\Enums\ProcessState;
 use AndroidSmsGateway\Enums\WebhookEvent;
 use Http\Client\Curl\Client as CurlClient;
@@ -382,6 +384,72 @@ final class ClientTest extends TestCase {
             'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
             $req->getHeaderLine('Authorization')
         );
+    }
+
+    public function testGenerateToken(): void {
+        $tokenRequest = new TokenRequest(['read', 'write'], 3600);
+
+        $responseMock = self::mockResponse(
+            '{"access_token":"test-token","token_type":"Bearer","id":"token-id","expires_at":"2023-12-31T23:59:59Z"}',
+            201,
+            ['Content-Type' => 'application/json']
+        );
+
+        $this->mockClient->addResponse($responseMock);
+
+        $tokenResponse = $this->client->GenerateToken($tokenRequest);
+        $req = $this->mockClient->getLastRequest();
+        $this->assertEquals('POST', $req->getMethod());
+        $this->assertEquals('/3rdparty/v1/auth/token', $req->getUri()->getPath());
+        $this->assertEquals(
+            'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
+            $req->getHeaderLine('Authorization')
+        );
+        $this->assertEquals(
+            'application/json',
+            $req->getHeaderLine('Content-Type')
+        );
+
+        $this->assertInstanceOf(TokenResponse::class, $tokenResponse);
+        $this->assertEquals('test-token', $tokenResponse->AccessToken());
+        $this->assertEquals('Bearer', $tokenResponse->TokenType());
+        $this->assertEquals('token-id', $tokenResponse->ID());
+        $this->assertEquals('2023-12-31T23:59:59Z', $tokenResponse->ExpiresAt());
+    }
+
+    public function testRevokeToken(): void {
+        $responseMock = self::mockResponse('', 204);
+
+        $this->mockClient->addResponse($responseMock);
+
+        $this->client->RevokeToken('token-id');
+        $req = $this->mockClient->getLastRequest();
+        $this->assertEquals('DELETE', $req->getMethod());
+        $this->assertEquals('/3rdparty/v1/auth/token/token-id', $req->getUri()->getPath());
+        $this->assertEquals(
+            'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
+            $req->getHeaderLine('Authorization')
+        );
+    }
+
+    public function testClientWithJwtToken(): void {
+        $jwtToken = 'test-jwt-token';
+        $client = new Client(null, $jwtToken, Client::DEFAULT_URL, $this->mockClient);
+
+        $responseMock = self::mockResponse(
+            '{"id":"123","state":"Sent","recipients":[{"phoneNumber":"+79000000000","state":"Sent"}]}',
+            201,
+            ['Content-Type' => 'application/json']
+        );
+
+        $this->mockClient->addResponse($responseMock);
+
+        $messageMock = $this->createMock(Message::class);
+        $messageMock->method('ToObject')->willReturn((object) []);
+
+        $client->SendMessage($messageMock);
+        $req = $this->mockClient->getLastRequest();
+        $this->assertEquals('Bearer ' . $jwtToken, $req->getHeaderLine('Authorization'));
     }
 
     public const MOCK_LOGIN = 'login';

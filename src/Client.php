@@ -9,6 +9,8 @@ use AndroidSmsGateway\Domain\LogEntry;
 use AndroidSmsGateway\Domain\Webhook;
 use AndroidSmsGateway\Domain\MessagesExportRequest;
 use AndroidSmsGateway\Domain\Settings;
+use AndroidSmsGateway\Domain\TokenRequest;
+use AndroidSmsGateway\Domain\TokenResponse;
 use AndroidSmsGateway\Exceptions\HttpException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
@@ -372,6 +374,42 @@ class Client {
      */
     public function DeleteWebhook(string $id): void {
         $path = '/webhooks/' . $id;
+
+        $this->sendRequest(
+            'DELETE',
+            $path
+        );
+    }
+
+    /**
+     * Generate a new JWT token
+     *
+     * @param TokenRequest $request
+     * @return TokenResponse
+     */
+    public function GenerateToken(TokenRequest $request): TokenResponse {
+        $path = '/auth/token';
+
+        $response = $this->sendRequest(
+            'POST',
+            $path,
+            $request
+        );
+        if (!is_object($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return TokenResponse::FromObject($response);
+    }
+
+    /**
+     * Revoke a JWT token
+     *
+     * @param string $jti
+     * @return void
+     */
+    public function RevokeToken(string $jti): void {
+        $path = '/auth/token/' . $jti;
 
         $this->sendRequest(
             'DELETE',
