@@ -8,6 +8,7 @@ final class WebhookEvent {
     public const SMS_DELIVERED = 'sms:delivered';
     public const SMS_FAILED = 'sms:failed';
     public const SYSTEM_PING = 'system:ping';
+    public const APP_STARTED = 'app:started';
 
     private const _ALL_ = [
         self::SMS_RECEIVED,
@@ -15,6 +16,7 @@ final class WebhookEvent {
         self::SMS_DELIVERED,
         self::SMS_FAILED,
         self::SYSTEM_PING,
+        self::APP_STARTED,
     ];
 
     private string $value;
@@ -45,6 +47,10 @@ final class WebhookEvent {
 
     public static function SYSTEM_PING(): self {
         return new self(self::SYSTEM_PING);
+    }
+
+    public static function APP_STARTED(): self {
+        return new self(self::APP_STARTED);
     }
 
     public static function FromValue(string $value): self {
