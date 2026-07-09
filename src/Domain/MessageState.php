@@ -38,6 +38,18 @@ class MessageState {
     private bool $isEncrypted;
 
     /**
+     * Text message content (present when includeContent=true)
+     * @var ?TextMessage
+     */
+    private ?TextMessage $textMessage;
+
+    /**
+     * Data message content (present when includeContent=true)
+     * @var ?DataMessage
+     */
+    private ?DataMessage $dataMessage;
+
+    /**
      * @param array<RecipientState> $recipients
      */
     public function __construct(
@@ -45,13 +57,17 @@ class MessageState {
         ProcessState $state,
         array $recipients,
         bool $isHashed = false,
-        bool $isEncrypted = false
+        bool $isEncrypted = false,
+        ?TextMessage $textMessage = null,
+        ?DataMessage $dataMessage = null
     ) {
         $this->id = $id;
         $this->state = $state;
         $this->recipients = $recipients;
         $this->isHashed = $isHashed;
         $this->isEncrypted = $isEncrypted;
+        $this->textMessage = $textMessage;
+        $this->dataMessage = $dataMessage;
     }
 
     /**
@@ -86,6 +102,22 @@ class MessageState {
         return $this->recipients;
     }
 
+    /**
+     * Get text message content (null if not requested via includeContent)
+     * @return ?TextMessage
+     */
+    public function TextMessage(): ?TextMessage {
+        return $this->textMessage;
+    }
+
+    /**
+     * Get data message content (null if not requested via includeContent)
+     * @return ?DataMessage
+     */
+    public function DataMessage(): ?DataMessage {
+        return $this->dataMessage;
+    }
+
     public function Decrypt(Encryptor $encryptor): self {
         if ($this->isHashed) {
             return $this;
@@ -99,6 +131,19 @@ class MessageState {
             static fn(RecipientState $recipient) => $recipient->Decrypt($encryptor),
             $this->recipients
         );
+
+        if ($this->textMessage !== null) {
+            $this->textMessage = new TextMessage(
+                $encryptor->Decrypt($this->textMessage->Text())
+            );
+        }
+
+        if ($this->dataMessage !== null) {
+            $this->dataMessage = new DataMessage(
+                $encryptor->Decrypt($this->dataMessage->Data()),
+                $this->dataMessage->Port()
+            );
+        }
 
         $this->isEncrypted = false;
 
@@ -114,7 +159,9 @@ class MessageState {
                 $obj->recipients
             ),
             $obj->isHashed ?? false,
-            $obj->isEncrypted ?? false
+            $obj->isEncrypted ?? false,
+            isset($obj->textMessage) ? TextMessage::FromObject($obj->textMessage) : null,
+            isset($obj->dataMessage) ? DataMessage::FromObject($obj->dataMessage) : null
         );
     }
 }

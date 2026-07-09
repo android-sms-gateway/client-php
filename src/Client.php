@@ -111,6 +111,72 @@ class Client {
     }
 
     /**
+     * List messages with filtering, pagination, and sorting
+     *
+     * @param array{
+     *     from?: string,
+     *     to?: string,
+     *     state?: string,
+     *     deviceId?: string,
+     *     limit?: int,
+     *     offset?: int,
+     *     includeContent?: bool,
+     *     sort?: 'created_at'|'-created_at',
+     * } $options
+     * @return array<MessageState>
+     */
+    public function ListMessages(array $options = []): array {
+        $path = '/messages';
+        $queryParams = [];
+
+        if (isset($options['from'])) {
+            $queryParams['from'] = $options['from'];
+        }
+        if (isset($options['to'])) {
+            $queryParams['to'] = $options['to'];
+        }
+        if (isset($options['state'])) {
+            $queryParams['state'] = $options['state'];
+        }
+        if (isset($options['deviceId'])) {
+            $queryParams['deviceId'] = $options['deviceId'];
+        }
+        if (isset($options['limit'])) {
+            $queryParams['limit'] = $options['limit'];
+        }
+        if (isset($options['offset'])) {
+            $queryParams['offset'] = $options['offset'];
+        }
+        if (isset($options['includeContent'])) {
+            $queryParams['includeContent'] = $options['includeContent'] ? 'true' : 'false';
+        }
+        if (isset($options['sort'])) {
+            $queryParams['sort'] = $options['sort'];
+        }
+
+        $queryString = empty($queryParams) ? '' : '?' . http_build_query($queryParams);
+
+        $response = $this->sendRequest(
+            'GET',
+            $path . $queryString
+        );
+        if (!is_array($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return array_map(
+            function ($obj) {
+                $state = MessageState::FromObject($obj);
+                if (isset($this->encryptor)) {
+                    $state = $state->Decrypt($this->encryptor);
+                }
+                return $state;
+            },
+            $response
+        );
+    }
+
+    /**
      * Get message state by ID (deprecated method)
      *
      * @param string $id
