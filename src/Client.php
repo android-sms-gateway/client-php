@@ -5,6 +5,7 @@ namespace AndroidSmsGateway;
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessageState;
 use AndroidSmsGateway\Domain\Device;
+use AndroidSmsGateway\Domain\IncomingMessage;
 use AndroidSmsGateway\Domain\LogEntry;
 use AndroidSmsGateway\Domain\Webhook;
 use AndroidSmsGateway\Domain\MessagesExportRequest;
@@ -418,6 +419,78 @@ class Client {
     }
 
     /**
+     * List incoming messages from the inbox
+     *
+     * @param array{
+     *     type?: string,
+     *     from?: string,
+     *     to?: string,
+     *     deviceId?: string,
+     *     includeAttachments?: bool,
+     *     limit?: int,
+     *     offset?: int,
+     * } $options
+     * @return array<IncomingMessage>
+     */
+    public function ListInboxMessages(array $options = []): array {
+        $path = '/inbox';
+        $queryParams = [];
+
+        if (isset($options['type'])) {
+            $queryParams['type'] = $options['type'];
+        }
+        if (isset($options['from'])) {
+            $queryParams['from'] = $options['from'];
+        }
+        if (isset($options['to'])) {
+            $queryParams['to'] = $options['to'];
+        }
+        if (isset($options['deviceId'])) {
+            $queryParams['deviceId'] = $options['deviceId'];
+        }
+        if (isset($options['includeAttachments'])) {
+            $queryParams['includeAttachments'] = $options['includeAttachments'] ? 'true' : 'false';
+        }
+        if (isset($options['limit'])) {
+            $queryParams['limit'] = $options['limit'];
+        }
+        if (isset($options['offset'])) {
+            $queryParams['offset'] = $options['offset'];
+        }
+
+        $queryString = empty($queryParams) ? '' : '?' . http_build_query($queryParams);
+
+        $response = $this->sendRequest(
+            'GET',
+            $path . $queryString
+        );
+        if (!is_array($response)) {
+            throw new RuntimeException('Invalid response');
+        }
+
+        return array_map(
+            static fn($obj) => IncomingMessage::FromObject($obj),
+            $response
+        );
+    }
+
+    /**
+     * Download a raw MMS attachment by message ID and part ID
+     *
+     * @param string $messageId
+     * @param int $partId
+     * @return string Raw bytes of the attachment content
+     */
+    public function DownloadAttachment(string $messageId, int $partId): string {
+        $path = '/inbox/' . $messageId . '/attachments/' . $partId;
+
+        return $this->sendRawRequest(
+            'GET',
+            $path
+        );
+    }
+
+    /**
      * @param \AndroidSmsGateway\Interfaces\SerializableInterface|null $payload
      * @throws \Http\Client\Exception\HttpException
      * @throws \RuntimeException
@@ -457,5 +530,32 @@ class Client {
         }
 
         return $result;
+    }
+
+    /**
+     * Send a request and return the raw response body as a string.
+     *
+     * @param string $method
+     * @param string $path
+     * @throws \Http\Client\Exception\HttpException
+     * @throws \RuntimeException
+     * @return string
+     */
+    protected function sendRawRequest(string $method, string $path): string {
+        $request = $this->requestFactory
+            ->createRequest(
+                $method,
+                $this->baseUrl . $path
+            )
+            ->withAddedHeader('User-Agent', sprintf(self::USER_AGENT_TEMPLATE, PHP_VERSION))
+            ->withAddedHeader('Authorization', $this->authHeader);
+
+        $response = $this->client->sendRequest($request);
+
+        if ($response->getStatusCode() >= 400) {
+            throw HttpException::create($request, $response);
+        }
+
+        return (string) $response->getBody();
     }
 }
