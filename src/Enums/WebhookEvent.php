@@ -7,6 +7,7 @@ final class WebhookEvent {
     public const SMS_SENT = 'sms:sent';
     public const SMS_DELIVERED = 'sms:delivered';
     public const SMS_FAILED = 'sms:failed';
+    public const SMS_CANCELLED = 'sms:cancelled';
     public const SYSTEM_PING = 'system:ping';
     public const APP_STARTED = 'app:started';
     public const MMS_RECEIVED = 'mms:received';
@@ -17,6 +18,7 @@ final class WebhookEvent {
         self::SMS_SENT,
         self::SMS_DELIVERED,
         self::SMS_FAILED,
+        self::SMS_CANCELLED,
         self::SYSTEM_PING,
         self::APP_STARTED,
         self::MMS_RECEIVED,
@@ -47,6 +49,10 @@ final class WebhookEvent {
 
     public static function SMS_FAILED(): self {
         return new self(self::SMS_FAILED);
+    }
+
+    public static function SMS_CANCELLED(): self {
+        return new self(self::SMS_CANCELLED);
     }
 
     public static function SYSTEM_PING(): self {

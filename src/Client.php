@@ -18,6 +18,7 @@ use Http\Discovery\Psr18ClientDiscovery;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use InvalidArgumentException;
 use RuntimeException;
 
 class Client {
@@ -175,6 +176,17 @@ class Client {
             },
             $response
         );
+    }
+
+    /**
+     * Cancel a pending message by ID
+     */
+    public function CancelMessage(string $id): void {
+        if ($id === '') {
+            throw new InvalidArgumentException('Message ID must not be empty');
+        }
+        $path = '/messages/' . rawurlencode($id);
+        $this->sendRequest('DELETE', $path);
     }
 
     /**

@@ -7,6 +7,8 @@ namespace AndroidSmsGateway\Enums;
  */
 final class ProcessState {
     public const PENDING = 'Pending';
+    public const CANCELLING = 'Cancelling';
+    public const CANCELLED = 'Cancelled';
     public const PROCESSED = 'Processed';
     public const SENT = 'Sent';
     public const DELIVERED = 'Delivered';
@@ -28,6 +30,22 @@ final class ProcessState {
      */
     public static function PENDING(): self {
         return new self(self::PENDING);
+    }
+
+    /**
+     * Cancelling - Cancellation has been requested
+     * @return self
+     */
+    public static function CANCELLING(): self {
+        return new self(self::CANCELLING);
+    }
+
+    /**
+     * Cancelled - Message has been cancelled
+     * @return self
+     */
+    public static function CANCELLED(): self {
+        return new self(self::CANCELLED);
     }
 
     /**
@@ -76,6 +94,8 @@ final class ProcessState {
 
     private const _ALL_ = [
         self::PENDING,
+        self::CANCELLING,
+        self::CANCELLED,
         self::PROCESSED,
         self::SENT,
         self::DELIVERED,
