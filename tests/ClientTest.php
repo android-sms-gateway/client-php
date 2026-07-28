@@ -15,6 +15,7 @@ use AndroidSmsGateway\Enums\WebhookEvent;
 use Http\Client\Curl\Client as CurlClient;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Mock\Client as MockClient;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -173,6 +174,39 @@ final class ClientTest extends TestCase {
             'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
             $req->getHeaderLine('Authorization')
         );
+    }
+
+    public function testCancelMessage(): void {
+        $responseMock = self::mockResponse('', 204);
+
+        $this->mockClient->addResponse($responseMock);
+
+        $this->client->CancelMessage('123');
+        $req = $this->mockClient->getLastRequest();
+        $this->assertEquals('DELETE', $req->getMethod());
+        $this->assertEquals('/3rdparty/v1/messages/123', $req->getUri()->getPath());
+        $this->assertEquals(
+            'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
+            $req->getHeaderLine('Authorization')
+        );
+    }
+
+    public function testCancelMessageEmptyId(): void {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Message ID must not be empty');
+
+        $this->client->CancelMessage('');
+    }
+
+    public function testCancelMessageSlashInId(): void {
+        $responseMock = self::mockResponse('', 204);
+
+        $this->mockClient->addResponse($responseMock);
+
+        $this->client->CancelMessage('abc/def');
+        $req = $this->mockClient->getLastRequest();
+        $this->assertEquals('DELETE', $req->getMethod());
+        $this->assertEquals('/3rdparty/v1/messages/abc%2Fdef', $req->getUri()->getPath());
     }
 
     public function testHealthCheck(): void {
