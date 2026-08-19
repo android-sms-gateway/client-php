@@ -12,6 +12,10 @@ final class WebhookEvent {
     public const APP_STARTED = 'app:started';
     public const MMS_RECEIVED = 'mms:received';
     public const MMS_DOWNLOADED = 'mms:downloaded';
+    public const SMS_BATCH_RECEIVED = 'sms:batch:received';
+    public const SMS_DATA_BATCH_RECEIVED = 'sms:batch:data-received';
+    public const MMS_BATCH_RECEIVED = 'mms:batch:received';
+    public const MMS_BATCH_DOWNLOADED = 'mms:batch:downloaded';
 
     private const _ALL_ = [
         self::SMS_RECEIVED,
@@ -23,6 +27,10 @@ final class WebhookEvent {
         self::APP_STARTED,
         self::MMS_RECEIVED,
         self::MMS_DOWNLOADED,
+        self::SMS_BATCH_RECEIVED,
+        self::SMS_DATA_BATCH_RECEIVED,
+        self::MMS_BATCH_RECEIVED,
+        self::MMS_BATCH_DOWNLOADED,
     ];
 
     private string $value;
@@ -69,6 +77,22 @@ final class WebhookEvent {
 
     public static function MMS_DOWNLOADED(): self {
         return new self(self::MMS_DOWNLOADED);
+    }
+
+    public static function SMS_BATCH_RECEIVED(): self {
+        return new self(self::SMS_BATCH_RECEIVED);
+    }
+
+    public static function SMS_DATA_BATCH_RECEIVED(): self {
+        return new self(self::SMS_DATA_BATCH_RECEIVED);
+    }
+
+    public static function MMS_BATCH_RECEIVED(): self {
+        return new self(self::MMS_BATCH_RECEIVED);
+    }
+
+    public static function MMS_BATCH_DOWNLOADED(): self {
+        return new self(self::MMS_BATCH_DOWNLOADED);
     }
 
     public static function FromValue(string $value): self {

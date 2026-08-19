@@ -2,6 +2,7 @@
 
 namespace AndroidSmsGateway;
 
+use AndroidSmsGateway\Domain\InboxRefreshRequest;
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessageState;
 use AndroidSmsGateway\Domain\Device;
@@ -290,6 +291,7 @@ class Client {
     /**
      * Request inbox messages export
      *
+     * @deprecated Use RefreshInbox instead
      * @param MessagesExportRequest $request
      * @return object
      */
@@ -306,6 +308,22 @@ class Client {
         }
 
         return $response;
+    }
+
+    /**
+     * Request inbox messages refresh
+     *
+     * @param InboxRefreshRequest $request
+     * @return void
+     */
+    public function RefreshInbox(InboxRefreshRequest $request): void {
+        $path = '/inbox/refresh';
+
+        $this->sendRequest(
+            'POST',
+            $path,
+            $request
+        );
     }
 
     /**
