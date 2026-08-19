@@ -3,6 +3,7 @@
 namespace AndroidSmsGateway\Tests;
 
 use AndroidSmsGateway\Client;
+use AndroidSmsGateway\Domain\InboxRefreshRequest;
 use AndroidSmsGateway\Domain\Message;
 use AndroidSmsGateway\Domain\MessagesExportRequest;
 use AndroidSmsGateway\Domain\MessageState;
@@ -10,8 +11,11 @@ use AndroidSmsGateway\Domain\Settings;
 use AndroidSmsGateway\Domain\Webhook;
 use AndroidSmsGateway\Domain\TokenRequest;
 use AndroidSmsGateway\Domain\TokenResponse;
+use AndroidSmsGateway\Enums\IncomingMessageType;
 use AndroidSmsGateway\Enums\ProcessState;
+use AndroidSmsGateway\Enums\WebhookDelivery;
 use AndroidSmsGateway\Enums\WebhookEvent;
+use AndroidSmsGateway\Exceptions\HttpException;
 use Http\Client\Curl\Client as CurlClient;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Mock\Client as MockClient;
@@ -251,6 +255,90 @@ final class ClientTest extends TestCase {
         );
 
         $this->assertEquals('accepted', $result->status);
+    }
+
+    public function testRefreshInbox(): void {
+        $request = new InboxRefreshRequest(
+            null,
+            '2020-01-01T00:00:00Z',
+            '2020-01-02T00:00:00Z',
+            [IncomingMessageType::SMS(), IncomingMessageType::DATA_SMS()],
+            WebhookDelivery::BATCH()
+        );
+
+        $responseMock = self::mockResponse('', 202);
+
+        $this->mockClient->addResponse($responseMock);
+
+        $this->client->RefreshInbox($request);
+        $req = $this->mockClient->getLastRequest();
+        $this->assertEquals('POST', $req->getMethod());
+        $this->assertEquals('/3rdparty/v1/inbox/refresh', $req->getUri()->getPath());
+        $this->assertEquals(
+            'Basic ' . base64_encode(self::MOCK_LOGIN . ':' . self::MOCK_PASSWORD),
+            $req->getHeaderLine('Authorization')
+        );
+        $this->assertEquals(
+            'application/json',
+            $req->getHeaderLine('Content-Type')
+        );
+
+        $body = json_decode((string) $req->getBody(), true);
+        $this->assertIsArray($body);
+        $this->assertEquals('Batch', $body['webhookDelivery']);
+        $this->assertEquals('2020-01-01T00:00:00Z', $body['since']);
+        $this->assertEquals('2020-01-02T00:00:00Z', $body['until']);
+        $this->assertEquals(['SMS', 'DATA_SMS'], $body['messageTypes']);
+    }
+
+    public function testRefreshInboxServerError(): void {
+        $request = new InboxRefreshRequest(
+            null,
+            '2020-01-01T00:00:00Z',
+            '2020-01-02T00:00:00Z',
+            [IncomingMessageType::SMS()],
+            WebhookDelivery::BATCH()
+        );
+
+        $responseMock = self::mockResponse(
+            '{"message":"internal error"}',
+            500,
+            ['Content-Type' => 'application/json']
+        );
+
+        $this->mockClient->addResponse($responseMock);
+
+        try {
+            $this->client->RefreshInbox($request);
+            $this->fail('Expected HttpException to be thrown');
+        } catch (HttpException $e) {
+            $this->assertSame(500, $e->getCode());
+            $this->assertSame(500, $e->getResponse()->getStatusCode());
+        }
+    }
+
+    public function testRefreshInboxClientError(): void {
+        $request = new InboxRefreshRequest(
+            null,
+            '2020-01-01T00:00:00Z',
+            '2020-01-02T00:00:00Z',
+            [],
+        );
+
+        $responseMock = self::mockResponse(
+            '{"message":"invalid request"}',
+            400,
+            ['Content-Type' => 'application/json']
+        );
+
+        $this->mockClient->addResponse($responseMock);
+
+        try {
+            $this->client->RefreshInbox($request);
+            $this->fail('Expected HttpException to be thrown');
+        } catch (HttpException $e) {
+            $this->assertSame(400, $e->getCode());
+        }
     }
 
     public function testGetLogs(): void {
