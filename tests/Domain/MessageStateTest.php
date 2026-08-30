@@ -41,6 +41,71 @@ final class MessageStateTest extends TestCase {
         $this->assertSame($recipients, $messageState->Recipients());
     }
 
+    public function testCanGetCreatedAt(): void {
+        $createdAt = '2024-01-02T03:04:05+02:00';
+        $messageState = new MessageState('msg_123', $this->processStateMock, [$this->recipientStateMock], false, false, null, null, $createdAt);
+        $this->assertEquals($createdAt, $messageState->CreatedAt());
+    }
+
+    public function testCreatedAtDefaultsToNull(): void {
+        $messageState = new MessageState('msg_123', $this->processStateMock, [$this->recipientStateMock]);
+        $this->assertNull($messageState->CreatedAt());
+    }
+
+    public function testCanCreateFromObjectWithCreatedAt(): void {
+        $createdAt = '2024-01-02T03:04:05+02:00';
+        $obj = (object) [
+            'id' => 'msg_123',
+            'state' => ProcessState::PENDING,
+            'createdAt' => $createdAt,
+            'recipients' => [
+                (object) [
+                    'phoneNumber' => '+1234567890',
+                    'state' => ProcessState::PENDING,
+                ],
+            ]
+        ];
+
+        $messageState = MessageState::FromObject($obj);
+
+        $this->assertEquals($createdAt, $messageState->CreatedAt());
+    }
+
+    public function testCanCreateFromObjectWithoutCreatedAt(): void {
+        $obj = (object) [
+            'id' => 'msg_123',
+            'state' => ProcessState::PENDING,
+            'recipients' => [
+                (object) [
+                    'phoneNumber' => '+1234567890',
+                    'state' => ProcessState::PENDING,
+                ],
+            ]
+        ];
+
+        $messageState = MessageState::FromObject($obj);
+
+        $this->assertNull($messageState->CreatedAt());
+    }
+
+    public function testCanCreateFromObjectWithMalformedCreatedAt(): void {
+        $obj = (object) [
+            'id' => 'msg_123',
+            'state' => ProcessState::PENDING,
+            'createdAt' => 'not-a-valid-timestamp',
+            'recipients' => [
+                (object) [
+                    'phoneNumber' => '+1234567890',
+                    'state' => ProcessState::PENDING,
+                ],
+            ]
+        ];
+
+        $messageState = MessageState::FromObject($obj);
+
+        $this->assertEquals('not-a-valid-timestamp', $messageState->CreatedAt());
+    }
+
     public function testCanCreateFromObject(): void {
         $id = 'msg_123';
         $obj = (object) [
