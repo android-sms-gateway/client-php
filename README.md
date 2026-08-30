@@ -1,57 +1,43 @@
-# 📱 SMS Gateway for Android™ PHP API Client
+# 📱 SMSGate PHP Client
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](https://opensource.org/licenses/Apache-2.0)
-[![Latest Stable Version](https://img.shields.io/packagist/v/capcom6/android-sms-gateway.svg?style=for-the-badge)](https://packagist.org/packages/capcom6/android-sms-gateway)
-[![PHP Version Require](https://img.shields.io/packagist/php-v/capcom6/android-sms-gateway?style=for-the-badge)](https://packagist.org/packages/capcom6/android-sms-gateway)
-[![Total Downloads](https://img.shields.io/packagist/dt/capcom6/android-sms-gateway.svg?style=for-the-badge)](https://packagist.org/packages/capcom6/android-sms-gateway)
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stars][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![License][license-shield]][license-url]
+[![Packagist Version][version-shield]][version-url]
 
-A modern PHP client for seamless integration with the [SMSGate](https://sms-gate.app) API. Send SMS messages, manage devices, and configure webhooks through your PHP applications with this intuitive library.
+A modern PHP client for the [SMSGate](https://sms-gate.app) API: send SMS messages and manage devices, webhooks, settings, and JWT tokens through your Android devices. PSR-18/PSR-17 compatible with any HTTP client via [php-http/discovery](https://github.com/php-http/discovery). See the [client libraries overview](https://docs.sms-gate.app/integration/client-libraries/) for the full ecosystem.
 
-## 🔖 Table of Contents
+## 📖 About
 
-- [📱 SMS Gateway for Android™ PHP API Client](#-sms-gateway-for-android-php-api-client)
-  - [🔖 Table of Contents](#-table-of-contents)
-  - [✨ Features](#-features)
-  - [⚙️ Prerequisites](#️-prerequisites)
+`capcom6/android-sms-gateway` is a type-safe PHP library for the SMSGate 3rd-party API. It covers messages (send, state, listing, cancellation), inbox refresh with attachment download, devices, webhooks, settings, logs, health checks, and the JWT token lifecycle, with a fluent `MessageBuilder` for message construction and an optional `Encryptor` for end-to-end encryption. Works with any PSR-18 HTTP client (Guzzle, curl, or others) and PHP 7.4+.
+
+## 📚 Table of Contents
+
+- [📱 SMSGate PHP Client](#-smsgate-php-client)
+  - [📖 About](#-about)
+  - [📚 Table of Contents](#-table-of-contents)
+  - [⭐ Features](#-features)
   - [📦 Installation](#-installation)
-  - [🚀 Quickstart](#-quickstart)
-    - [Sending an SMS](#sending-an-sms)
-    - [Managing Devices](#managing-devices)
-  - [🔐 Authentication](#-authentication)
+  - [🔑 Authentication](#-authentication)
     - [Basic Authentication](#basic-authentication)
     - [JWT Authentication](#jwt-authentication)
-      - [Generating a JWT Token](#generating-a-jwt-token)
-      - [Using a JWT Token](#using-a-jwt-token)
-      - [Revoking a JWT Token](#revoking-a-jwt-token)
-  - [📚 Full API Reference](#-full-api-reference)
-    - [Client Initialization](#client-initialization)
-      - [Basic Authentication](#basic-authentication-1)
-    - [Core Methods](#core-methods)
-    - [Builder Methods](#builder-methods)
-  - [🔒 Security Notes](#-security-notes)
-    - [Best Practices](#best-practices)
-    - [Encryption Support](#encryption-support)
-  - [👥 Contributing](#-contributing)
-    - [Development Setup](#development-setup)
+  - [🚀 Quickstart](#-quickstart)
+  - [💻 Usage](#-usage)
+  - [📖 API Reference](#-api-reference)
+  - [🤝 Contributing](#-contributing)
   - [📄 License](#-license)
 
-## ✨ Features
+## ⭐ Features
 
-- **Builder Pattern**: Fluent interface for message and settings configuration
-- **PSR Standards**: Compatible with any PSR-18 HTTP client
-- **Comprehensive API**: Access to all SMS Gateway endpoints
-- **Error Handling**: Structured exception management
-- **Type Safety**: Strict typing throughout the codebase
-- **Encryption Support**: End-to-end message encryption
-- **Dual Authentication**: Support for both Basic and JWT authentication
-- **Token Management**: Generate, use, and revoke JWT tokens with configurable scopes and TTL
-
-## ⚙️ Prerequisites
-
-- PHP 7.4+
-- [Composer](https://getcomposer.org/)
-- PSR-18 compatible HTTP client (e.g., [Guzzle](https://github.com/guzzle/guzzle))
-- SMS Gateway for Android account
+- Fluent `MessageBuilder` for messages and `SettingsBuilder` for settings
+- PSR-18 HTTP client and PSR-17 factories, auto-discovered
+- Basic and JWT authentication with token generation and revocation
+- Webhooks, devices, settings, logs, and health checks
+- Inbox refresh with webhook delivery and MMS attachment download
+- Optional end-to-end encryption via `Encryptor`
+- Structured `HttpException` error handling
 
 ## 📦 Installation
 
@@ -59,9 +45,35 @@ A modern PHP client for seamless integration with the [SMSGate](https://sms-gate
 composer require capcom6/android-sms-gateway
 ```
 
+Requires PHP 7.4+ and a PSR-18 HTTP client implementation (e.g. Guzzle, `php-http/curl-client`).
+
+## 🔑 Authentication
+
+Two methods are supported: Basic authentication with account credentials, and JWT bearer tokens with scoped permissions. JWT is recommended for production.
+
+### Basic Authentication
+
+```php
+// Basic authentication with account credentials
+$client = new Client('your_login', 'your_password');
+```
+
+### JWT Authentication
+
+```php
+use AndroidSmsGateway\Domain\TokenRequest;
+
+$basicClient = new Client('your_login', 'your_password');
+
+$token = $basicClient->GenerateToken(
+    new TokenRequest(['messages:send', 'messages:read'], 3600)
+);
+
+$jwtClient = new Client(null, $token->AccessToken());
+```
+
 ## 🚀 Quickstart
 
-### Sending an SMS
 ```php
 <?php
 
@@ -70,203 +82,45 @@ require 'vendor/autoload.php';
 use AndroidSmsGateway\Client;
 use AndroidSmsGateway\Domain\MessageBuilder;
 
-// Initialize client with credentials
 $client = new Client('your_login', 'your_password');
 
-// Build message with fluent interface
-$message = (new MessageBuilder('Your message text here.', ['+1234567890']))
-    ->setTtl(3600)                  // Message time-to-live in seconds
-    ->setSimNumber(1)               // Use SIM slot 1
-    ->setWithDeliveryReport(true)   // Request delivery report
-    ->setPriority(100)              // Higher priority message
+$message = (new MessageBuilder('Hello from PHP', ['+15550100']))
+    ->setWithDeliveryReport(true)
     ->build();
 
-// Send message
-try {
-    $messageState = $client->SendMessage($message);
-    echo "✅ Message sent! ID: " . $messageState->ID() . PHP_EOL;
-    
-    // Check status after delay
-    sleep(5);
-    $updatedState = $client->GetMessageState($messageState->ID());
-    echo "📊 Message status: " . $updatedState->State() . PHP_EOL;
-} catch (\Exception $e) {
-    echo "❌ Error: " . $e->getMessage() . PHP_EOL;
-    exit(1);
-}
+$state = $client->SendMessage($message);
+echo 'Message ID: ' . $state->ID() . PHP_EOL;
 ```
 
-### Managing Devices
+## 💻 Usage
 
-```php
-// List registered devices
-$devices = $client->ListDevices();
-echo "📱 Registered devices: " . count($devices) . PHP_EOL;
+Beyond sending, the client covers message listing and cancellation, inbox listing and refresh, device management, health checks, logs, settings (get, patch, replace), webhooks, and token lifecycle. See [src/Client.php](https://github.com/android-sms-gateway/client-php/blob/master/src/Client.php) for the complete method list with signatures and [src/Domain](https://github.com/android-sms-gateway/client-php/tree/master/src/Domain) for the domain models.
 
-// Remove a device
-try {
-    $client->RemoveDevice('device-id-123');
-    echo "🗑️ Device removed successfully" . PHP_EOL;
-} catch (\Exception $e) {
-    echo "❌ Device removal failed: " . $e->getMessage() . PHP_EOL;
-}
-```
+## 📖 API Reference
 
-## 🔐 Authentication
+- [Official API Reference](https://docs.sms-gate.app/integration/api/) - endpoints, payloads, and error codes
+- [Authentication Guide](https://docs.sms-gate.app/integration/authentication/) - scopes and token management
+- [Client libraries overview](https://docs.sms-gate.app/integration/client-libraries/)
+- [Client source](https://github.com/android-sms-gateway/client-php/blob/master/src/Client.php) - full method reference and examples
 
-The SMSGate client supports two authentication methods: Basic Authentication and JWT (JSON Web Token) authentication. Each method has its own use cases and benefits.
+## 🤝 Contributing
 
-### Basic Authentication
-
-```php
-// Initialize client with Basic authentication
-$client = new Client('your_login', 'your_password');
-```
-
-### JWT Authentication
-
-JWT authentication uses bearer tokens for authentication.
-
-#### Generating a JWT Token
-
-```php
-use AndroidSmsGateway\Client;
-use AndroidSmsGateway\Domain\TokenRequest;
-
-// First, create a client with Basic authentication to generate a token
-$basicClient = new Client('your_login', 'your_password');
-
-// Create a token request with specific scopes and TTL
-$tokenRequest = new TokenRequest(
-    ['messages:send', 'messages:read'],  // Scopes for permissions
-    3600                                 // Token TTL in seconds (optional)
-);
-
-// Generate the token
-$tokenResponse = $basicClient->GenerateToken($tokenRequest);
-$jwtToken = $tokenResponse->AccessToken();
-
-echo "Token generated! Expires at: " . $tokenResponse->ExpiresAt() . PHP_EOL;
-```
-
-#### Using a JWT Token
-
-```php
-// Initialize client with JWT authentication
-$jwtClient = new Client(null, $jwtToken);
-
-// Now use the client as usual
-$message = (new MessageBuilder('Your message text here.', ['+1234567890']))->build();
-$messageState = $jwtClient->SendMessage($message);
-```
-
-#### Revoking a JWT Token
-
-```php
-// Revoke a token using its ID (jti)
-$basicClient->RevokeToken($tokenResponse->ID());
-echo "Token revoked successfully!" . PHP_EOL;
-```
-
-## 📚 Full API Reference
-
-### Client Initialization
-
-The client supports two authentication methods: Basic Authentication and JWT Bearer Tokens.
-
-#### Basic Authentication
-```php
-$clientBasic = new Client(
-    string $login,
-    string $password,
-    string $serverUrl = 'https://api.sms-gate.app/3rdparty/v1',
-    ?\Psr\Http\Client\ClientInterface $httpClient = null,
-    ?\AndroidSmsGateway\Encryptor $encryptor = null
-);
-
-$clientJWT = new Client(
-    null,                           // Set login to null for JWT
-    string $jwtToken,               // JWT token as the second parameter
-    string $serverUrl = 'https://api.sms-gate.app/3rdparty/v1',
-    ?\Psr\Http\Client\ClientInterface $httpClient = null,
-    ?\AndroidSmsGateway\Encryptor $encryptor = null
-);
-```
-
-### Core Methods
-
-| Category           | Method                                       | Description                       |
-| ------------------ | -------------------------------------------- | --------------------------------- |
-| **Messages**       | `SendMessage(Message $message)`              | Send SMS message                  |
-|                    | `GetMessageState(string $id)`                | Get message status by ID          |
-|                    | `RefreshInbox(InboxRefreshRequest $request)` | Refresh inbox, deliver webhooks   |
-| **Devices**        | `ListDevices()`                              | List registered devices           |
-|                    | `RemoveDevice(string $id)`                   | Remove device by ID               |
-| **System**         | `HealthCheck()`                              | Check API health status           |
-|                    | `GetLogs(?string $from, ?string $to)`        | Retrieve system logs              |
-| **Settings**       | `GetSettings()`                              | Get account settings              |
-|                    | `PatchSettings(Settings $settings)`          | Partially update account settings |
-|                    | `ReplaceSettings(Settings $settings)`        | Replace account settings          |
-| **Webhooks**       | `ListWebhooks()`                             | List registered webhooks          |
-|                    | `RegisterWebhook(Webhook $webhook)`          | Register new webhook              |
-|                    | `DeleteWebhook(string $id)`                  | Delete webhook by ID              |
-| **Authentication** | `GenerateToken(TokenRequest $request)`       | Generate a new JWT token          |
-|                    | `RevokeToken(string $jti)`                   | Revoke a JWT token by ID          |
-
-### Builder Methods
-```php
-// Message Builder
-$message = (new MessageBuilder(string $text, array $recipients))
-    ->setTtl(int $seconds)
-    ->setSimNumber(int $simSlot)
-    ->setWithDeliveryReport(bool $enable)
-    ->setPriority(int $value)
-    ->build();
-```
-
-## 🔒 Security Notes
-
-### Best Practices
-
-1. **Never store credentials in code** - Use environment variables:
-   ```php
-   $login = getenv('SMS_GATEWAY_LOGIN');
-   $password = getenv('SMS_GATEWAY_PASSWORD');
-   ```
-2. **Use HTTPS** - Ensure all API traffic is encrypted
-3. **Validate inputs** - Sanitize phone numbers and message content
-4. **Rotate credentials** - Regularly update your API credentials
-
-### Encryption Support
-
-```php
-use AndroidSmsGateway\Encryptor;
-
-// Initialize client with encryption
-$encryptor = new Encryptor('your-secret-passphrase');
-$client = new Client($login, $password, Client::DEFAULT_URL, null, $encryptor);
-```
-
-## 👥 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Development Setup
-```bash
-git clone https://github.com/android-sms-gateway/client-php.git
-cd client-php
-composer install
-```
+Contributions are welcome. Open an issue to discuss major changes before submitting a pull request; PRs target the `master` branch.
 
 ## 📄 License
-This library is open-sourced software licensed under the [Apache-2.0 license](LICENSE).
 
----
+Distributed under the Apache License 2.0. See [LICENSE](https://github.com/android-sms-gateway/client-php/blob/master/LICENSE).
 
-**Note**: Android is a trademark of Google LLC. This project is not affiliated with or endorsed by Google.
+<!-- Badge references: Shields.io style=for-the-badge is mandatory -->
+[contributors-shield]: https://img.shields.io/github/contributors/android-sms-gateway/client-php?style=for-the-badge
+[contributors-url]: https://github.com/android-sms-gateway/client-php/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/android-sms-gateway/client-php?style=for-the-badge
+[forks-url]: https://github.com/android-sms-gateway/client-php/network/members
+[stars-shield]: https://img.shields.io/github/stars/android-sms-gateway/client-php?style=for-the-badge
+[stars-url]: https://github.com/android-sms-gateway/client-php/stargazers
+[issues-shield]: https://img.shields.io/github/issues/android-sms-gateway/client-php?style=for-the-badge
+[issues-url]: https://github.com/android-sms-gateway/client-php/issues
+[license-shield]: https://img.shields.io/github/license/android-sms-gateway/client-php?style=for-the-badge
+[license-url]: https://github.com/android-sms-gateway/client-php/blob/master/LICENSE
+[version-shield]: https://img.shields.io/packagist/v/capcom6/android-sms-gateway?style=for-the-badge
+[version-url]: https://packagist.org/packages/capcom6/android-sms-gateway
