@@ -113,7 +113,7 @@ final class ClientTest extends TestCase {
         );
         $client = new Client($login, $password, Client::DEFAULT_URL, $curlClient);
 
-        $message = new Message(date('Y-m-d H:i:s'), [$phoneNumber]);
+        $message = new Message('Test message from `client-php`' . PHP_EOL . date('Y-m-d H:i:s'), [$phoneNumber]);
 
         $messageState = $client->SendMessage($message);
         $this->assertInstanceOf(MessageState::class, $messageState);

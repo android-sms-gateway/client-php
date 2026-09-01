@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### New Features
+
+#### Outgoing MMS
+
+- **Outgoing MMS support** — pass an `MmsMessage` (instead of a text string) to `Message` or `MessageBuilder` to send an MMS with an optional subject, body, and attachments:
+  ```php
+  $mms = new MmsMessage('Subject', 'Body', [
+      new MmsAttachment('image/png', base64_encode($bytes), 'photo.png'),
+  ]);
+  $message = (new MessageBuilder($mms, ['+15550100']))->build();
+  ```
+  Attachments carry a MIME type, base64-encoded data, and an optional filename; null subject, text, and filename are omitted from the request body. MMS fields are encrypted when an `Encryptor` is set, and an MMS message is mutually exclusive with an SMS text body on the wire.
+
+## [2.6.1] - 2026-09-23
+
 ### Bug Fixes
 
 - **Message priority always serialized** — a message's `priority` is now always included in the JSON body (defaulting to `0` when unset), matching the wire format of the other official SDKs.
