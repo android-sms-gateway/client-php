@@ -14,9 +14,9 @@ class MessageBuilder {
     private ?string $id = null;
 
     /**
-     * @var string
+     * @var string|MmsMessage
      */
-    private string $message;
+    private $message;
 
     /**
      * @var int|null
@@ -50,10 +50,10 @@ class MessageBuilder {
     private ?string $validUntil = null;
 
     /**
-     * @param string $message
+     * @param string|MmsMessage $message
      * @param array<string> $phoneNumbers
      */
-    public function __construct(string $message, array $phoneNumbers) {
+    public function __construct($message, array $phoneNumbers) {
         $this->message = $message;
         $this->phoneNumbers = $phoneNumbers;
     }
@@ -72,10 +72,10 @@ class MessageBuilder {
     /**
      * Set message text
      *
-     * @param string $message
+     * @param string|MmsMessage $message
      * @return $this
      */
-    public function setMessage(string $message): self {
+    public function setMessage($message): self {
         $this->message = $message;
         return $this;
     }
