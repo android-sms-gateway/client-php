@@ -50,6 +50,12 @@ class MessageState {
     private ?DataMessage $dataMessage;
 
     /**
+     * Created at timestamp
+     * @var ?string
+     */
+    private ?string $createdAt;
+
+    /**
      * @param array<RecipientState> $recipients
      */
     public function __construct(
@@ -59,7 +65,8 @@ class MessageState {
         bool $isHashed = false,
         bool $isEncrypted = false,
         ?TextMessage $textMessage = null,
-        ?DataMessage $dataMessage = null
+        ?DataMessage $dataMessage = null,
+        ?string $createdAt = null
     ) {
         $this->id = $id;
         $this->state = $state;
@@ -68,6 +75,7 @@ class MessageState {
         $this->isEncrypted = $isEncrypted;
         $this->textMessage = $textMessage;
         $this->dataMessage = $dataMessage;
+        $this->createdAt = $createdAt;
     }
 
     /**
@@ -118,6 +126,14 @@ class MessageState {
         return $this->dataMessage;
     }
 
+    /**
+     * Get created at timestamp
+     * @return ?string
+     */
+    public function CreatedAt(): ?string {
+        return $this->createdAt;
+    }
+
     public function Decrypt(Encryptor $encryptor): self {
         if ($this->isHashed) {
             return $this;
@@ -161,7 +177,8 @@ class MessageState {
             $obj->isHashed ?? false,
             $obj->isEncrypted ?? false,
             isset($obj->textMessage) ? TextMessage::FromObject($obj->textMessage) : null,
-            isset($obj->dataMessage) ? DataMessage::FromObject($obj->dataMessage) : null
+            isset($obj->dataMessage) ? DataMessage::FromObject($obj->dataMessage) : null,
+            $obj->createdAt ?? null
         );
     }
 }
