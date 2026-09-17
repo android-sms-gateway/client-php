@@ -31,6 +31,7 @@ final class MessageTest extends TestCase {
         $expected = (object) [
             'id' => $id,
             'message' => $messageText,
+            'priority' => 0,
             'ttl' => $ttl,
             'simNumber' => $simNumber,
             'withDeliveryReport' => $withDeliveryReport,
@@ -52,5 +53,17 @@ final class MessageTest extends TestCase {
         $this->assertNull($serialized->simNumber);
         $this->assertTrue($serialized->withDeliveryReport);
         $this->assertFalse($serialized->isEncrypted);
+        $this->assertSame(0, $serialized->priority);
+    }
+
+    public function testLegacyTextMessageStillSerializesMessageKey(): void {
+        $message = new Message('Hello', ['+1234567890']);
+
+        $json = json_encode($message->ToObject(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+
+        $this->assertSame(
+            '{"id":null,"message":"Hello","simNumber":null,"withDeliveryReport":true,"isEncrypted":false,"phoneNumbers":["+1234567890"],"priority":0}',
+            $json
+        );
     }
 }
