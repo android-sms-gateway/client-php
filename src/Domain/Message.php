@@ -105,6 +105,10 @@ class Message implements SerializableInterface {
             $obj->priority = $this->priority;
         }
 
+        // Go wire parity: Message.Priority has no omitempty and always
+        // serializes (zero value 0).
+        $obj->priority = $this->priority ?? 0;
+
         if ($this->ttl !== null) {
             $obj->ttl = $this->ttl;
         }
