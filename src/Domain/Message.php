@@ -13,11 +13,18 @@ class Message implements SerializableInterface {
      * Message ID, will be generated automatically if not set
      */
     private ?string $id;
+
     /**
      * Message text
      * Long message will be divided into parts
      */
     private string $message;
+    /**
+     * MMS message content (mutually exclusive with text/data messages)
+     * @var MmsMessage|null
+     */
+    private ?MmsMessage $mmsMessage;
+
     /**
      * Time to live in seconds
      * If message is not received by device in this time, it will be failed
@@ -50,10 +57,11 @@ class Message implements SerializableInterface {
     private ?string $validUntil;
 
     /**
+     * @param string|MmsMessage $message
      * @param array<string> $phoneNumbers
      */
     public function __construct(
-        string $message,
+        $message,
         array $phoneNumbers,
         ?string $id = null,
         ?int $ttl = null,
@@ -67,7 +75,6 @@ class Message implements SerializableInterface {
         }
 
         $this->id = $id;
-        $this->message = $message;
         $this->ttl = $ttl;
         $this->simNumber = $simNumber;
         $this->withDeliveryReport = $withDeliveryReport;
@@ -75,6 +82,23 @@ class Message implements SerializableInterface {
         $this->isEncrypted = false;
         $this->priority = $priority;
         $this->validUntil = $validUntil;
+
+        if ($message instanceof MmsMessage) {
+            $this->mmsMessage = $message;
+            $this->message = '';
+        } else {
+            $this->message = $message;
+            $this->mmsMessage = null;
+        }
+    }
+
+
+    /**
+     * Get MMS message content (null if not set)
+     * @return MmsMessage|null
+     */
+    public function MmsMessage(): ?MmsMessage {
+        return $this->mmsMessage;
     }
 
     public function Encrypt(Encryptor $encryptor): self {
@@ -88,18 +112,45 @@ class Message implements SerializableInterface {
             fn(string $phoneNumber) => $encryptor->Encrypt($phoneNumber),
             $this->phoneNumbers
         );
+
+        if ($this->mmsMessage !== null) {
+            $this->mmsMessage = new MmsMessage(
+                $this->mmsMessage->Subject() !== null
+                ? $encryptor->Encrypt($this->mmsMessage->Subject())
+                : null,
+                $this->mmsMessage->Text() !== null
+                ? $encryptor->Encrypt($this->mmsMessage->Text())
+                : null,
+                array_map(
+                    fn(MmsAttachment $attachment) => new MmsAttachment(
+                        $attachment->ContentType(),
+                        $encryptor->Encrypt($attachment->Data()),
+                        $attachment->Name() !== null
+                        ? $encryptor->Encrypt($attachment->Name())
+                        : null
+                    ),
+                    $this->mmsMessage->Attachments()
+                )
+            );
+        }
+
         return $this;
     }
 
     public function ToObject(): object {
         $obj = (object) [
             'id' => $this->id,
-            'message' => $this->message,
             'simNumber' => $this->simNumber,
             'withDeliveryReport' => $this->withDeliveryReport,
             'isEncrypted' => $this->isEncrypted,
             'phoneNumbers' => $this->phoneNumbers,
         ];
+
+        if ($this->mmsMessage !== null) {
+            $obj->mmsMessage = $this->mmsMessage->ToObject();
+        } else {
+            $obj->message = $this->message;
+        }
 
         if ($this->priority !== null) {
             $obj->priority = $this->priority;
