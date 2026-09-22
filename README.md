@@ -11,7 +11,7 @@ A modern PHP client for the [SMSGate](https://sms-gate.app) API: send SMS messag
 
 ## 📖 About
 
-`capcom6/android-sms-gateway` is a type-safe PHP library for the SMSGate 3rd-party API. It covers messages (send, state, listing, cancellation), inbox refresh with attachment download, devices, webhooks, settings, logs, health checks, and the JWT token lifecycle, with a fluent `MessageBuilder` for message construction and an optional `Encryptor` for end-to-end encryption. Works with any PSR-18 HTTP client (Guzzle, curl, or others) and PHP 7.4+.
+`capcom6/android-sms-gateway` is a type-safe PHP library for the SMSGate 3rd-party API. It covers messages (send, state, listing, cancellation), inbox refresh with individual or batch webhook delivery and attachment download, devices, webhooks, settings, logs, health checks, and the JWT token lifecycle, with a fluent `MessageBuilder` for message construction and an optional `Encryptor` for end-to-end encryption. Works with any PSR-18 HTTP client (Guzzle, curl, or others) and PHP 7.4+.
 
 ## 📚 Table of Contents
 
@@ -25,6 +25,7 @@ A modern PHP client for the [SMSGate](https://sms-gate.app) API: send SMS messag
     - [JWT Authentication](#jwt-authentication)
   - [🚀 Quickstart](#-quickstart)
   - [💻 Usage](#-usage)
+  - [⚙️ Configuration](#️-configuration)
   - [📖 API Reference](#-api-reference)
   - [🤝 Contributing](#-contributing)
   - [📄 License](#-license)
@@ -32,10 +33,11 @@ A modern PHP client for the [SMSGate](https://sms-gate.app) API: send SMS messag
 ## ⭐ Features
 
 - Fluent `MessageBuilder` for messages and `SettingsBuilder` for settings
+- Messages: send, state, listing, and cancellation
 - PSR-18 HTTP client and PSR-17 factories, auto-discovered
 - Basic and JWT authentication with token generation and revocation
-- Webhooks, devices, settings, logs, and health checks
-- Inbox refresh with webhook delivery and MMS attachment download
+- Inbox refresh with individual or batch webhook delivery and MMS attachment download
+- Webhooks (single and batch events), devices, settings, logs, and health checks
 - Optional end-to-end encryption via `Encryptor`
 - Structured `HttpException` error handling
 
@@ -95,6 +97,20 @@ echo 'Message ID: ' . $state->ID() . PHP_EOL;
 ## 💻 Usage
 
 Beyond sending, the client covers message listing and cancellation, inbox listing and refresh, device management, health checks, logs, settings (get, patch, replace), webhooks, and token lifecycle. See [src/Client.php](https://github.com/android-sms-gateway/client-php/blob/master/src/Client.php) for the complete method list with signatures and [src/Domain](https://github.com/android-sms-gateway/client-php/tree/master/src/Domain) for the domain models.
+
+## ⚙️ Configuration
+
+The `Client` constructor accepts the following parameters:
+
+| Parameter    | Required | Description                                                               |
+| ------------ | -------- | ------------------------------------------------------------------------- |
+| `$login`     | No       | Account login for Basic authentication                                    |
+| `$password`  | Yes      | Account password (Basic) or a JWT token (Bearer)                          |
+| `$serverUrl` | No       | API base URL; defaults to `https://api.sms-gate.app/3rdparty/v1`          |
+| `$client`    | No       | PSR-18 HTTP client; auto-discovered via `php-http/discovery` when omitted |
+| `$encryptor` | No       | Optional `Encryptor` for end-to-end encryption                            |
+
+When `$login` is set, Basic authentication is used. When only `$password` is provided, it is sent as a Bearer JWT token.
 
 ## 📖 API Reference
 
