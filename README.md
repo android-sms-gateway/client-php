@@ -11,7 +11,7 @@ A modern PHP client for the [SMSGate](https://sms-gate.app) API: send SMS messag
 
 ## 📖 About
 
-`capcom6/android-sms-gateway` is a type-safe PHP library for the SMSGate 3rd-party API. It covers messages (send, state, listing, cancellation), inbox refresh with individual or batch webhook delivery and attachment download, devices, webhooks, settings, logs, health checks, and the JWT token lifecycle, with a fluent `MessageBuilder` for message construction and an optional `Encryptor` for end-to-end encryption. Works with any PSR-18 HTTP client (Guzzle, curl, or others) and PHP 7.4+.
+`capcom6/android-sms-gateway` is a type-safe PHP library for the SMSGate 3rd-party API. It covers messages (send SMS and MMS, state, listing, cancellation), inbox refresh with individual or batch webhook delivery and attachment download, devices, webhooks, settings, logs, health checks, and the JWT token lifecycle, with a fluent `MessageBuilder` for message construction and an optional `Encryptor` for end-to-end encryption. Works with any PSR-18 HTTP client (Guzzle, curl, or others) and PHP 7.4+.
 
 ## 📚 Table of Contents
 
@@ -33,7 +33,7 @@ A modern PHP client for the [SMSGate](https://sms-gate.app) API: send SMS messag
 ## ⭐ Features
 
 - Fluent `MessageBuilder` for messages and `SettingsBuilder` for settings
-- Messages: send, state, listing, and cancellation
+- Messages: send SMS text or MMS (subject, body, attachments), state, listing, and cancellation
 - PSR-18 HTTP client and PSR-17 factories, auto-discovered
 - Basic and JWT authentication with token generation and revocation
 - Inbox refresh with individual or batch webhook delivery and MMS attachment download
