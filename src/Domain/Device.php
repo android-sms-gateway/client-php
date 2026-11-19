@@ -2,6 +2,7 @@
 
 namespace AndroidSmsGateway\Domain;
 
+use AndroidSmsGateway\Enums\DeviceState;
 use AndroidSmsGateway\Interfaces\SerializableInterface;
 
 /**
@@ -39,12 +40,18 @@ class Device implements SerializableInterface {
     private ?string $lastSeen;
 
     /**
+     * Device state
+     */
+    private ?DeviceState $state;
+
+    /**
      * @param string $id
      * @param string $name
      * @param string $createdAt
      * @param string $updatedAt
      * @param string|null $deletedAt
      * @param string|null $lastSeen
+     * @param DeviceState|null $state
      */
     public function __construct(
         string $id,
@@ -52,7 +59,8 @@ class Device implements SerializableInterface {
         string $createdAt,
         string $updatedAt,
         ?string $deletedAt = null,
-        ?string $lastSeen = null
+        ?string $lastSeen = null,
+        ?DeviceState $state = null
     ) {
         $this->id = $id;
         $this->name = $name;
@@ -60,6 +68,7 @@ class Device implements SerializableInterface {
         $this->updatedAt = $updatedAt;
         $this->deletedAt = $deletedAt;
         $this->lastSeen = $lastSeen;
+        $this->state = $state;
     }
 
     /**
@@ -67,13 +76,18 @@ class Device implements SerializableInterface {
      * @return self
      */
     public static function FromObject(object $obj): self {
+        $state = isset($obj->state) && is_string($obj->state)
+            ? DeviceState::FromValue($obj->state)
+            : null;
+
         return new self(
             $obj->id,
             $obj->name,
             $obj->createdAt,
             $obj->updatedAt,
             $obj->deletedAt ?? null,
-            $obj->lastSeen ?? null
+            $obj->lastSeen ?? null,
+            $state
         );
     }
 
@@ -94,6 +108,10 @@ class Device implements SerializableInterface {
 
         if ($this->lastSeen !== null) {
             $obj->lastSeen = $this->lastSeen;
+        }
+
+        if ($this->state !== null) {
+            $obj->state = $this->state->Value();
         }
 
         return $obj;
@@ -148,17 +166,26 @@ class Device implements SerializableInterface {
     }
 
     /**
+     * Get device state
+     * @return DeviceState|null
+     */
+    public function State(): ?DeviceState {
+        return $this->state;
+    }
+
+    /**
      * @return string
      */
     public function __toString(): string {
         return sprintf(
-            '[id] %s [name] %s [created at] %s [updated at] %s [deleted at] %s [last seen] %s',
+            '[id] %s [name] %s [created at] %s [updated at] %s [deleted at] %s [last seen] %s [state] %s',
             $this->id,
             $this->name,
             $this->createdAt,
             $this->updatedAt,
             $this->deletedAt ?? '',
-            $this->lastSeen ?? ''
+            $this->lastSeen ?? '',
+            $this->state !== null ? $this->state->Value() : ''
         );
     }
 }
